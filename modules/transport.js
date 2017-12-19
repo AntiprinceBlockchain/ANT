@@ -480,24 +480,18 @@ Transport.prototype.shared = {
 
 	postBlock: function (query, cb) {
 		query = query || {};
+		query.block = query.block || {};
+		var blockNormalized;
 		try {
-			var block;
-			if (query.block) {
-				query.block = bson.deserialize(Buffer.from(query.block));
-				block = modules.blocks.verify.addBlockProperties(query.block);
-			}
-			block = library.logic.block.objectNormalize(block);
+			blockNormalized = Object.assign({}, library.logic.block.objectNormalize(modules.blocks.verify.addBlockProperties(bson.deserialize(query.block))));
 		} catch (e) {
 			library.logger.debug('Block normalization failed', {err: e.toString(), module: 'transport', block: query.block });
-
 			__private.removePeer({peer: query.peer, code: 'EBLOCK'});
-
 			return setImmediate(cb, e.toString());
 		}
-
-		library.bus.message('receiveBlock', block);
-
-		return setImmediate(cb, null, {success: true, blockId: block.id});
+		query.block = null;
+		library.bus.message('receiveBlock', blockNormalized);
+		return setImmediate(cb, null, {success: true, blockId: blockNormalized.id});
 	},
 
 	list: function (req, cb) {
