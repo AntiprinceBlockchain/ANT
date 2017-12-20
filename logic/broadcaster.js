@@ -5,7 +5,6 @@ var constants = require('../helpers/constants.js');
 var jobsQueue = require('../helpers/jobsQueue.js');
 var extend = require('extend');
 var _ = require('lodash');
-var bson = require('../helpers/bson.js');
 
 // Private fields
 var modules, library, self, __private = {};
@@ -153,16 +152,7 @@ Broadcaster.prototype.broadcast = function (params, options, cb) {
 			}
 		},
 		function sendToPeer (peers, waterCb) {
-			try {
-				var optionDeserialized = JSON.parse(JSON.stringify(options));
-
-				if (optionDeserialized.data.block) {
-					optionDeserialized.data.block = bson.deserialize(options.data.block);
-				}
-				library.logger.debug('Begin broadcast', optionDeserialized);
-			} catch (e) {
-				library.logger.debug('Begin broadcast (deserialization failed for log)', {err: e.toString(), options: options });
-			}
+			library.logger.debug('Begin broadcast', options);
 			if (params.limit === self.config.peerLimit) {
 				peers = peers.slice(0, self.config.broadcastLimit);
 			}

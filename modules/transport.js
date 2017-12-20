@@ -8,7 +8,6 @@ var zlib = require('zlib');
 
 var Broadcaster = require('../logic/broadcaster.js');
 var bignum = require('../helpers/bignum.js');
-var bson = require('../helpers/bson.js');
 var constants = require('../helpers/constants.js');
 var failureCodes = require('../api/ws/rpc/failureCodes');
 var Peer = require('../logic/peer');
@@ -483,7 +482,7 @@ Transport.prototype.shared = {
 		query.block = query.block || {};
 		var blockNormalized;
 		try {
-			blockNormalized = Object.assign({}, library.logic.block.objectNormalize(modules.blocks.verify.addBlockProperties(bson.deserialize(query.block))));
+			blockNormalized = Object.assign({}, library.logic.block.objectNormalize(modules.blocks.verify.addBlockProperties(query.block)));
 		} catch (e) {
 			library.logger.debug('Block normalization failed', {err: e.toString(), module: 'transport', block: query.block });
 			__private.removePeer({peer: query.peer, code: 'EBLOCK'});

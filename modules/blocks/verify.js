@@ -7,7 +7,6 @@ var crypto = require('crypto');
 var slots = require('../../helpers/slots.js');
 var sql = require('../../sql/blocks.js');
 var exceptions = require('../../helpers/exceptions.js');
-var bson = require('../../helpers/bson.js');
 
 var modules, library, self, __private = {};
 
@@ -519,8 +518,7 @@ Verify.prototype.processBlock = function (block, broadcast, cb, saveBlock) {
 				try {
 					// Delete default properties
 					var blockReduced = self.deleteBlockProperties(block);
-					var serializedBlockReduced = bson.serialize(blockReduced);
-					modules.blocks.chain.broadcastReducedBlock(Object.assign({}, serializedBlockReduced), block.id, broadcast);
+					modules.blocks.chain.broadcastReducedBlock(blockReduced, block.id, broadcast);
 				} catch (err) {
 					return setImmediate(seriesCb, err);
 				}
