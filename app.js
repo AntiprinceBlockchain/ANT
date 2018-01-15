@@ -717,8 +717,8 @@ process.on('uncaughtException', function (err) {
 });
 
 setInterval(function () {
-	console.log('PERFORMING HEAP SNAPSHOT');
+	console.log('PERFORMING EVERY HOUR HEAP SNAPSHOT');
 	var heapdump = require('heapdump');
 	var randomstring = require('randomstring');
 	heapdump.writeSnapshot('./' + Date.now() + randomstring.generate(10) + '.heapsnapshot');
-}, 2 * 60 * 60 * 1000);
+}, 60 * 60 * 1000);
