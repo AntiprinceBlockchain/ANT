@@ -1,3 +1,16 @@
+/*
+ * Copyright © 2018 Lisk Foundation
+ *
+ * See the LICENSE file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with the Lisk Foundation,
+ * no part of this software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ */
 'use strict';/*eslint*/
 
 var crypto = require('crypto');
@@ -14,7 +27,6 @@ var slots = require('../../../helpers/slots');
 var typesRepresentatives = require('../../fixtures/typesRepresentatives');
 
 var InTransfer = rewire('../../../logic/inTransfer.js');
-var sql = require('../../../sql/dapps.js');
 
 var modulesLoader = require('../../common/modulesLoader');
 
@@ -34,7 +46,7 @@ var validSender = {
 var senderHash = crypto.createHash('sha256').update(validSender.password, 'utf8').digest();
 var senderKeypair = ed.makeKeypair(senderHash);
 
-var validTransaction =  { 
+var validTransaction =  {
 	id: '2273003018673898961',
 	height: 843,
 	blockId: '11870363750006389009',
@@ -89,14 +101,19 @@ describe('inTransfer', function () {
 	var accountsStub;
 
 	var trs;
-	var rawTrs; 
+	var rawTrs;
 	var sender;
 	var dummyBlock;
 
 	beforeEach(function () {
 		dbStub = {
-			query: sinon.stub().resolves(),
-			one: sinon.stub().resolves()
+			dapps: {
+				countByTransactionId: sinon.stub().resolves(),
+				countByOutTransactionId: sinon.stub().resolves(),
+				getExisting: sinon.stub().resolves(),
+				list: sinon.stub().resolves(),
+				getGenesis: sinon.stub().resolves()
+			}
 		};
 		sharedStub = {
 			getGenesis: sinon.stub().callsArgWith(1, null, validGetGensisResult)
@@ -238,23 +255,23 @@ describe('inTransfer', function () {
 			});
 		});
 
-		it('should call library.db.one', function (done) {
+		it('should call library.db.dapps.countByTransactionId', function (done) {
 			inTransfer.verify(trs, sender, function () {
-				expect(dbStub.one.calledOnce).to.be.true;
+				expect(dbStub.dapps.countByTransactionId.calledOnce).to.be.true;
 				done();
 			});
 		});
 
-		it('should call library.db.one with sql.countByTransactionId', function (done) {
+		it('should call library.db.dapps.countByTransactionId with trs.asset.inTransfer.dappId', function (done) {
 			inTransfer.verify(trs, sender, function () {
-				expect(dbStub.one.calledWith(sql.countByTransactionId)).to.be.true;
+				expect(dbStub.dapps.countByTransactionId.calledWith(trs.asset.inTransfer.dappId)).to.be.true;
 				done();
 			});
 		});
 
-		it('should call library.db.one with {id: trs.asset.inTransfer.dappId}', function (done) {
+		it('should call library.db.dapps.countByTransactionId with trs.asset.inTransfer.dappId', function (done) {
 			inTransfer.verify(trs, sender, function () {
-				expect(dbStub.one.args[0][1]).to.eql({id: trs.asset.inTransfer.dappId});
+				expect(dbStub.dapps.countByTransactionId.calledWith(trs.asset.inTransfer.dappId)).to.be.true;
 				done();
 			});
 		});
@@ -262,7 +279,7 @@ describe('inTransfer', function () {
 		describe('when library.db.one fails', function () {
 
 			beforeEach(function () {
-				dbStub.one = sinon.stub().rejects('Rejection error');
+				dbStub.dapps.countByTransactionId = sinon.stub().rejects('Rejection error');
 			});
 
 			it('should call callback with error', function (done) {
@@ -278,7 +295,7 @@ describe('inTransfer', function () {
 			describe('when dapp does not exist', function () {
 
 				beforeEach(function () {
-					dbStub.one = sinon.stub().resolves({count: 0});
+					dbStub.dapps.countByTransactionId = sinon.stub().resolves({count: 0});
 				});
 
 				it('should call callback with error', function (done) {
@@ -292,7 +309,7 @@ describe('inTransfer', function () {
 			describe('when dapp exists', function () {
 
 				beforeEach(function () {
-					dbStub.one = sinon.stub().resolves({count: 1});
+					dbStub.dapps.countByTransactionId = sinon.stub().resolves({count: 1});
 				});
 
 				it('should call callback with error = undefined', function (done) {
@@ -372,7 +389,8 @@ describe('inTransfer', function () {
 			expect(sharedStub.getGenesis.calledWith({dappid: trs.asset.inTransfer.dappId})).to.be.true;
 		});
 
-		describe('when shared.getGenesis fails', function () {
+		// TODO: #1242 Have to disabled due to issue https://github.com/LiskHQ/lisk/issues/1242
+		describe.skip('when shared.getGenesis fails', function () {
 
 			beforeEach(function () {
 				sharedStub.getGenesis = sinon.stub.callsArgWith(1, 'getGenesis error');
@@ -385,7 +403,8 @@ describe('inTransfer', function () {
 			});
 		});
 
-		describe('when shared.getGenesis succeeds', function () {
+		// TODO: #1242 Have to disabled due to issue https://github.com/LiskHQ/lisk/issues/1242
+		describe.skip('when shared.getGenesis succeeds', function () {
 
 			beforeEach(function () {
 				sharedStub.getGenesis = sinon.stub.callsArg(1);
@@ -420,7 +439,7 @@ describe('inTransfer', function () {
 				beforeEach(function () {
 					accountsStub.mergeAccountAndGet = sinon.stub().callsArgWith(1, 'mergeAccountAndGet error');
 				});
-				
+
 				it('should call callback with error', function () {
 					inTransfer.apply(trs, dummyBlock, sender, function (err) {
 						expect(err).not.to.be.empty;
@@ -644,35 +663,6 @@ describe('inTransfer', function () {
 			it('should return result containing inTransfer.dappId = raw.dapp_id', function () {
 				expect(inTransfer.dbRead(rawTrs)).to.have.nested.property('inTransfer.dappId').equal(rawTrs.in_dappId);
 			});
-		});
-	});
-
-	describe('dbSave', function () {
-
-		var dbSaveResult;
-
-		beforeEach(function () {
-			dbSaveResult = inTransfer.dbSave(trs);
-		});
-
-		it('should return result containing table = "intransfer"', function () {
-			expect(dbSaveResult).to.have.property('table').equal('intransfer');
-		});
-
-		it('should return result containing fields = ["dappId", "transactionId"]', function () {
-			expect(dbSaveResult).to.have.property('fields').eql(['dappId', 'transactionId']);
-		});
-
-		it('should return result containing values', function () {
-			expect(dbSaveResult).to.have.property('values');
-		});
-
-		it('should return result containing values.dappId = trs.asset.inTransfer.dappId', function () {
-			expect(dbSaveResult).to.have.nested.property('values.dappId').equal(trs.asset.inTransfer.dappId);
-		});
-
-		it('should return result containing values.transactionId = trs.id', function () {
-			expect(dbSaveResult).to.have.nested.property('values.transactionId').equal(trs.id);
 		});
 	});
 

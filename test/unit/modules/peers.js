@@ -1,3 +1,16 @@
+/*
+ * Copyright © 2018 Lisk Foundation
+ *
+ * See the LICENSE file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with the Lisk Foundation,
+ * no part of this software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ */
 'use strict';
 
 var expect = require('chai').expect;
@@ -17,6 +30,7 @@ var constants = require('../../../helpers/constants');
 var generateMatchedAndUnmatchedBroadhashes = require('../common/helpers/peers').generateMatchedAndUnmatchedBroadhashes;
 var modulesLoader = require('../../common/modulesLoader');
 var random = require('../../common/utils/random');
+var swagerHelper = require('../../../helpers/swagger');
 
 describe('peers', function () {
 
@@ -31,9 +45,12 @@ describe('peers', function () {
 
 	var NONCE = randomstring.generate(16);
 
-	before(function () {
+	before(function (done) {
 		dbMock = {
-			any: sinon.stub().resolves()
+			any: sinon.stub().resolves(),
+			peers: {
+				list: sinon.stub().resolves()
+			}
 		};
 		PeersRewired = rewire('../../../modules/peers');
 		peersLogicMock = {
@@ -50,6 +67,13 @@ describe('peers', function () {
 			system: systemModuleMock,
 			transport: transportModuleMock
 		};
+
+		swagerHelper.getResolvedSwaggerSpec().then(function (resolvedSpec) {
+			modules.swagger = {
+				definitions: resolvedSpec.definitions
+			};
+			done();
+		});
 	});
 
 	before(function (done) {
@@ -678,23 +702,40 @@ describe('peers', function () {
 
 		var originalPeersList;
 
-		before(function () {
+		beforeEach(function () {
 			originalPeersList = PeersRewired.__get__('library.config.peers.list');
 			PeersRewired.__set__('library.config.peers.list', []);
 			peersLogicMock.create = sinon.stub().returnsArg(0);
 			sinon.stub(peers, 'discover');
 		});
 
-		after(function () {
+		afterEach(function () {
 			PeersRewired.__set__('library.config.peers.list', originalPeersList);
 			peers.discover.restore();
 		});
 
 		it('should update peers during onBlockchainReady', function (done) {
-			
 			peers.onBlockchainReady();
 			setTimeout(function () {
 				expect(peers.discover.calledOnce).to.be.ok;
+				done();
+			}, 100);
+		});
+
+		it('should update peers list onBlockchainReady even if rpc.status call fails', function (done) {
+			var peerStub = {
+				rpc: {
+					status: sinon.stub().callsArgWith(0, 'Failed to get peer status')
+				},
+				applyHeaders: sinon.stub()
+			};
+
+			PeersRewired.__set__('library.config.peers.list', [peerStub]);
+			peersLogicMock.upsert = sinon.spy();
+
+			peers.onBlockchainReady();
+			setTimeout(function () {
+				expect(peersLogicMock.upsert.calledWith(peerStub, false)).to.be.true;
 				done();
 			}, 100);
 		});
@@ -704,7 +745,11 @@ describe('peers', function () {
 
 		before(function () {
 			peersLogicMock.list = sinon.stub().returns([]);
-			peers.discover = sinon.stub().callsArgWith(0, null);
+			sinon.stub(peers, 'discover').callsArgWith(0, null);
+		});
+
+		after(function () {
+			peers.discover.restore();
 		});
 
 		it('should update peers during onBlockchainReady', function (done) {
@@ -713,6 +758,39 @@ describe('peers', function () {
 				expect(peers.discover.calledOnce).to.be.ok;
 				done();
 			}, 100);
+		});
+	});
+
+	describe('discover', function () {
+
+		var randomPeerStub;
+		var revertPrivateStubs;
+
+		beforeEach(function () {
+			revertPrivateStubs = PeersRewired.__set__({
+				__private: {
+					updatePeerStatus: sinon.spy()
+				}
+			});
+			randomPeerStub = {
+				rpc: {
+					status: sinon.stub().callsArgWith(0, 'Failed to get peer status'),
+					list: sinon.spy()
+				}
+			};
+			peers.list = sinon.stub().callsArgWith(1, null, [randomPeerStub]);
+		});
+
+		afterEach(function () {
+			revertPrivateStubs();
+		});
+
+		it('should not call randomPeer.rpc.list if randomPeer.rpc.status operation has failed', function (done) {
+			peers.discover(function (err) {
+				expect(err).to.equal('Failed to get peer status');
+				expect(randomPeerStub.rpc.list.called).to.be.false;
+				done();
+			});
 		});
 	});
 });

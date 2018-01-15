@@ -1,3 +1,16 @@
+/*
+ * Copyright © 2018 Lisk Foundation
+ *
+ * See the LICENSE file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with the Lisk Foundation,
+ * no part of this software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ */
 'use strict';
 
 var _ = require('lodash');
@@ -6,8 +19,6 @@ var crypto = require('crypto');
 
 var apiCodes = require('../helpers/apiCodes');
 var ApiError = require('../helpers/apiError');
-var sql = require('../sql/voters');
-var schema = require('../schema/voters');
 var constants = require('../helpers/constants');
 
 // Private fields
@@ -49,7 +60,7 @@ var getVotersForDelegates = function (filters, delegate, cb) {
 	if (!delegate) {
 		return setImmediate(cb, new ApiError({}, apiCodes.NO_CONTENT));
 	}
-	library.db.query(sql.getVoters, {publicKey: delegate.publicKey, limit: filters.limit, offset: filters.offset}).then(function (rows) {
+	library.db.voters.list({publicKey: delegate.publicKey, limit: filters.limit, offset: filters.offset}).then(function (rows) {
 		var addresses = rows.map(function (a) { return a.accountId; });
 		return setImmediate(cb, null, addresses);
 	}).catch(function (err) {
@@ -67,8 +78,8 @@ var getVotersCountForDelegates = function (delegate, cb) {
 		return setImmediate(cb, new ApiError({}, apiCodes.NO_CONTENT));
 	}
 
-	library.db.one(sql.getVotersCount, {publicKey: delegate.publicKey}).then(function (row) {
-		return setImmediate(cb, null, parseInt(row.votersCount));
+	library.db.voters.count(delegate.publicKey).then(function (votersCount) {
+		return setImmediate(cb, null, parseInt(votersCount));
 	}).catch(function (err) {
 		library.logger.error(err.stack);
 		return setImmediate(cb, 'Failed to get voters count for delegate: ' + delegate.publicKey);
@@ -83,8 +94,8 @@ var getVotesCountForDelegates = function (delegate, cb) {
 		return setImmediate(cb, new ApiError({}, apiCodes.NO_CONTENT));
 	}
 
-	library.db.one(sql.getVotesCount, {address: delegate.address}).then(function (row) {
-		return setImmediate(cb, null, parseInt(row.votesCount));
+	library.db.votes.count(delegate.address).then(function (votesCount) {
+		return setImmediate(cb, null, parseInt(votesCount));
 	}).catch(function (err) {
 		library.logger.error(err.stack);
 		return setImmediate(cb, 'Failed to get votes count for delegate: ' + delegate.address);
@@ -95,7 +106,7 @@ var getVotesForDelegates = function (filters, delegate, cb) {
 	if (!delegate) {
 		return setImmediate(cb, new ApiError({}, apiCodes.NO_CONTENT));
 	}
-	library.db.query(sql.getVotes, {address: delegate.address, limit: filters.limit, offset: filters.offset}).then(function (rows) {
+	library.db.votes.list({address: delegate.address, limit: filters.limit, offset: filters.offset}).then(function (rows) {
 		var addresses = rows.map(function (a) { return modules.accounts.generateAddressByPublicKey(a.dependentId); });
 		return setImmediate(cb, null, addresses);
 	}).catch(function (err) {

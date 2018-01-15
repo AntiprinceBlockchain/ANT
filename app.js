@@ -1,3 +1,16 @@
+/*
+ * Copyright © 2018 Lisk Foundation
+ *
+ * See the LICENSE file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with the Lisk Foundation,
+ * no part of this software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ */
 'use strict';
 /**
  * A node-style callback as used by {@link logic} and {@link modules}.
@@ -42,6 +55,7 @@ var httpApi = require('./helpers/httpApi.js');
 var Sequence = require('./helpers/sequence.js');
 var z_schema = require('./helpers/z_schema.js');
 var swagger = require('./config/swagger');
+var swaggerHelper = require('./helpers/swagger');
 
 process.stdin.resume();
 
@@ -86,6 +100,7 @@ var config = {
 		cache: './modules/cache.js',
 		dapps: './modules/dapps.js',
 		delegates: './modules/delegates.js',
+		rounds: './modules/rounds.js',
 		loader: './modules/loader.js',
 		multisignatures: './modules/multisignatures.js',
 		node: './modules/node.js',
@@ -108,6 +123,18 @@ var config = {
  */
 var logger = new Logger({ echo: appConfig.consoleLogLevel, errorLevel: appConfig.fileLogLevel,
 	filename: appConfig.logFileName });
+
+var dbLogger = null;
+
+if (appConfig.db.logFileName && appConfig.db.logFileName === appConfig.logFileName) {
+	dbLogger = logger;
+} else {
+	dbLogger = new Logger({
+		echo: appConfig.db.consoleLogLevel || appConfig.consoleLogLevel,
+		errorLevel: appConfig.db.fileLogLevel || appConfig.fileLogLevel,
+		filename: appConfig.db.logFileName
+	});
+}
 
 // Trying to get last git commit
 try {
@@ -172,7 +199,7 @@ d.run(function () {
 		},
 
 		schema: function (cb) {
-			cb(null, new z_schema());
+			cb(null, swaggerHelper.getValidator());
 		},
 
 		/**
@@ -325,7 +352,7 @@ d.run(function () {
 			scope.network.app.use(bodyParser.json({limit: '2mb'}));
 			scope.network.app.use(methodOverride());
 
-			var ignore = ['id', 'name', 'lastBlockId', 'blockId', 'transactionId', 'address', 'recipientId', 'senderId', 'previousBlock'];
+			var ignore = ['id', 'name', 'username', 'blockId', 'transactionId', 'address', 'recipientId', 'senderId'];
 
 			scope.network.app.use(queryParser({
 				parser: function (value, radix, name) {
@@ -405,12 +432,8 @@ d.run(function () {
 		}],
 		db: function (cb) {
 			var db = require('./helpers/database.js');
-			db.connect(config.db, logger, cb);
+			db.connect(config.db, dbLogger, cb);
 		},
-		pg_notify: ['db', 'bus', 'logger', function (scope, cb) {
-			var pg_notify = require('./helpers/pg-notify.js');
-			pg_notify.init(scope.db, scope.bus, scope.logger, cb);
-		}],
 		/**
 		 * It tries to connect with redis server based on config. provided in config.json file
 		 * @param {function} cb
@@ -528,7 +551,9 @@ d.run(function () {
 			cb();
 		}],
 
-		ready: ['modules', 'bus', 'logic', function (scope, cb) {
+		ready: ['swagger', 'modules', 'bus', 'logic', function (scope, cb) {
+			scope.modules.swagger = scope.swagger;
+
 			// Fire onBind event in every module
 			scope.bus.message('bind', scope.modules);
 
@@ -605,8 +630,7 @@ d.run(function () {
 			 */
 			process.once('cleanup', function () {
 				scope.logger.info('Cleaning up...');
-				scope.socketCluster.killWorkers();
-				scope.socketCluster.killBrokers();
+				scope.socketCluster.destroy();
 				async.eachSeries(modules, function (module, cb) {
 					if (typeof(module.cleanup) === 'function') {
 						module.cleanup(cb);

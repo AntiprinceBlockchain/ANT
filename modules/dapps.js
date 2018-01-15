@@ -1,3 +1,16 @@
+/*
+ * Copyright © 2018 Lisk Foundation
+ *
+ * See the LICENSE file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with the Lisk Foundation,
+ * no part of this software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ */
 'use strict';
 
 var apiCodes = require('../helpers/apiCodes.js');
@@ -7,8 +20,6 @@ var dappCategories = require('../helpers/dappCategories.js');
 var InTransfer = require('../logic/inTransfer.js');
 var sortBy = require('../helpers/sort_by.js').sortBy;
 var OutTransfer = require('../logic/outTransfer.js');
-var schema = require('../schema/dapps.js');
-var sql = require('../sql/dapps.js');
 var transactionTypes = require('../helpers/transactionTypes.js');
 
 // Private fields
@@ -21,17 +32,18 @@ __private.assetTypes = {};
  * - DApp
  * - InTransfer
  * - OutTransfer
+ *
  * Calls logic.transaction.attachAssetType().
  *
- * Listens `exit` signal.
+ * Listens for an `exit` signal.
  * @memberof module:dapps
  * @class
  * @classdesc Main dapps methods.
  * @param {function} cb - Callback function.
  * @param {scope} scope - App instance.
  * @return {setImmediateCallback} Callback function with `self` as data.
- * @todo apply node pattern for callbacks: callback always at the end.
- * @todo add 'use strict';
+ * @todo Apply node pattern for callbacks: callback always at the end.
+ * @todo Add 'use strict';
  */
 // Constructor
 function DApps (cb, scope) {
@@ -77,8 +89,9 @@ function DApps (cb, scope) {
 			scope.logger
 		)
 	);
+
 	/**
-	 * Receives an 'exit' signal and calls stopDApp for each launched app.
+	 * Receives an 'exit' signal and calls stopDApp for each launched application.
 	 * @listens exit
 	 */
 	process.on('exit', function () {
@@ -89,13 +102,12 @@ function DApps (cb, scope) {
 
 // Private methods
 /**
- * Gets records from `dapps` table based on filter
+ * Gets applications based on a given filter object.
  * @private
  * @implements {library.db.query}
- * @param {Object} filter - Could contains type, name, category, link, limit,
- * offset, sort
- * @param {function} cb
- * @return {setImmediateCallback} error description | rows data
+ * @param {Object} filter - May contain type, name, category, link, limit, offset, sort.
+ * @param {function} cb - Callback function.
+ * @return {setImmediateCallback} cb, error | cb, null, application
  */
 __private.list = function (filter, cb) {
 	var params = {}, where = [];
@@ -149,7 +161,7 @@ __private.list = function (filter, cb) {
 
 	var sort = sortBy(
 		filter.sort, {
-			sortFields: sql.sortFields
+			sortFields: library.db.dapps.sortFields
 		}
 	);
 
@@ -157,11 +169,11 @@ __private.list = function (filter, cb) {
 		return setImmediate(cb, sort.error);
 	}
 
-	library.db.query(sql.list({
+	library.db.dapps.list(Object.assign({}, {
 		where: where,
 		sortField: sort.sortField,
 		sortMethod: sort.sortMethod
-	}), params).then(function (rows) {
+	}, params)).then(function (rows) {
 		return setImmediate(cb, null, rows);
 	}).catch(function (err) {
 		library.logger.error(err.stack);
@@ -207,7 +219,7 @@ DApps.prototype.isLoaded = function () {
  * Internal & Shared
  * - DApps.prototype.internal
  * - shared.
- * @todo implement API comments with apidoc.
+ * @todo Implement API comments with apidoc.
  * @see {@link http://apidocjs.com/}
  */
 DApps.prototype.shared = {
@@ -215,13 +227,13 @@ DApps.prototype.shared = {
 	/**
 	 * Utility method to get dapps.
 	 *
-	 * @param {Object} parameters - Object of all parameters
-	 * @param {string} parameters.transactionId - Registration transaction ID to query
-	 * @param {string} parameters.name - Name to query - Fuzzy search
-	 * @param {string} parameters.sort - Sort field
-	 * @param {int} parameters.limit - Limit applied to results
-	 * @param {int} parameters.offset - Offset value for results
-	 * @param {function} cb - Callback function
+	 * @param {Object} parameters - Object of all parameters.
+	 * @param {string} parameters.transactionId - Registration transaction ID to query.
+	 * @param {string} parameters.name - Name to query - Fuzzy search.
+	 * @param {string} parameters.sort - Sort field.
+	 * @param {int} parameters.limit - Limit applied to results.
+	 * @param {int} parameters.offset - Offset value for results.
+	 * @param {function} cb - Callback function.
 	 * @return {Array.<Object>}
 	 */
 	getDapps: function (parameters, cb) {
@@ -236,8 +248,8 @@ DApps.prototype.shared = {
 };
 
 // Shared API
-shared.getGenesis = function (req, cb) {
-	library.db.query(sql.getGenesis, { id: req.dappid }).then(function (rows) {
+shared.getGenesis = function (req, cb, tx) {
+	(tx || library.db).dapps.getGenesis(req.dappid).then(function (rows) {
 		if (rows.length === 0) {
 			return setImmediate(cb, 'Application genesis block not found');
 		} else {

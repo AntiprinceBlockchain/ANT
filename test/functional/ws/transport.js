@@ -1,3 +1,16 @@
+/*
+ * Copyright © 2018 Lisk Foundation
+ *
+ * See the LICENSE file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with the Lisk Foundation,
+ * no part of this software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ */
 'use strict';
 
 var test = require('../functional.js');
@@ -13,14 +26,14 @@ var prefixedPeer = require('../../fixtures/peers').randomNormalizedPeer;
 var Rules = require('../../../api/ws/workers/rules');
 
 var wsServer = require('../../common/ws/server');
-var wsClient = require('../../common/ws/client');
+var WSServerMaster = require('../../common/ws/serverMaster');
 
 describe('RPC', function () {
 
 	var clientSocket;
 	var validClientSocketOptions;
 	var wampClient = new WAMPClient();
-	var frozenHeaders = wsClient.generatePeerHeaders('127.0.0.1', wsServer.wsPort, wsServer.validNonce);
+	var frozenHeaders = WSServerMaster.generatePeerHeaders({wsPort: wsServer.options.port, nonce: wsServer.validNonce});
 
 	before(function (done) {
 		validClientSocketOptions = {

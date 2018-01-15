@@ -1,3 +1,16 @@
+/*
+ * Copyright © 2018 Lisk Foundation
+ *
+ * See the LICENSE file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with the Lisk Foundation,
+ * no part of this software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ */
 'use strict';
 
 var _ = require('lodash');
@@ -9,6 +22,7 @@ var sinon = require('sinon');
 
 var jobsQueue = require('../../../helpers/jobsQueue');
 var modulesLoader = require('../../common/modulesLoader');
+var swaggerHelper = require('../../../helpers/swagger');
 
 describe('loader', function () {
 
@@ -23,28 +37,34 @@ describe('loader', function () {
 				get: function () {}
 			}
 		};
-		modulesLoader.initModule(
-			loaderModuleRewired,
-			_.assign({}, modulesLoader.scope, {
-				logic: {
-					transaction: sinon.mock(),
-					account: sinon.mock(),
-					peers: {
-						create: sinon.stub.returnsArg(0)
+
+		swaggerHelper.getResolvedSwaggerSpec().then(function (resolvedSwaggerSpec) {
+			modulesLoader.initModule(
+				loaderModuleRewired,
+				_.assign({}, modulesLoader.scope, {
+					logic: {
+						transaction: sinon.mock(),
+						account: sinon.mock(),
+						peers: {
+							create: sinon.stub.returnsArg(0)
+						}
 					}
-				}
-			}),
-			function (err, __loaderModule) {
-				if (err) {
-					return done(err);
-				}
-				loaderModule = __loaderModule;
-				loadBlockChainStub = sinon.stub(loaderModuleRewired.__get__('__private'), 'loadBlockChain');
-				loaderModule.onBind({
-					blocks: blocksModuleMock
+				}),
+				function (err, __loaderModule) {
+					if (err) {
+						return done(err);
+					}
+					loaderModule = __loaderModule;
+					loadBlockChainStub = sinon.stub(loaderModuleRewired.__get__('__private'), 'loadBlockChain');
+					loaderModule.onBind({
+						blocks: blocksModuleMock,
+						swagger: {
+							definitions: resolvedSwaggerSpec.definitions
+						}
+					});
+					done();
 				});
-				done();
-			});
+		});
 
 		after(function () {
 			loadBlockChainStub.restore();

@@ -1,3 +1,16 @@
+/*
+ * Copyright © 2018 Lisk Foundation
+ *
+ * See the LICENSE file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with the Lisk Foundation,
+ * no part of this software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ */
 'use strict';
 
 var async = require('async');
@@ -16,9 +29,8 @@ var typeRepresentatives = require('../../fixtures/typesRepresentatives.js');
 var wsApi = require('../../../helpers/wsApi');
 var failureCodes = require('../../../api/ws/rpc/failureCodes');
 
-var WSClient = require('../../common/ws/client');
+var WSServerMaster = require('../../common/ws/serverMaster');
 var System = require('../../../modules/system');
-
 
 describe('handshake', function () {
 
@@ -48,9 +60,7 @@ describe('handshake', function () {
 	describe('compatibility', function () {
 
 		beforeEach(function () {
-			validHeaders = WSClient.generatePeerHeaders();
-			validHeaders.version = minVersion;
-			validHeaders.nonce = validPeerNonce;
+			validHeaders = WSServerMaster.generatePeerHeaders({version: minVersion, nonce: validPeerNonce});
 		});
 
 		it('should return an error when nonce is identical to server', function (done) {
@@ -82,10 +92,7 @@ describe('handshake', function () {
 	});
 
 	after(function () {
-
-		validHeaders = WSClient.generatePeerHeaders();
-		validHeaders.version =  minVersion;
-		validHeaders.nonce = '0123456789ABCDEF';
+		validHeaders = WSServerMaster.generatePeerHeaders({version: minVersion, nonce: '0123456789ABCDEF'});
 
 		describe('schema tests', function () {
 
@@ -102,10 +109,9 @@ describe('handshake', function () {
 				);
 
 				invalidTypes.forEach(function (type) {
-
 					it('should call callback with error.description when input is: ' + type.description, function (done) {
 						handshake(type.input, function (err) {
-							expect(err.description).to.equal('#/: Expected type object but found type ' + type.expectation);
+							expect(err.description).to.equal(': Expected type object but found type ' + type.expectation);
 							done();
 						});
 					});
@@ -120,7 +126,7 @@ describe('handshake', function () {
 
 				describe('nonce', function  () {
 
-					var invalidTypes = _.difference(typeRepresentatives.allTypes, 
+					var invalidTypes = _.difference(typeRepresentatives.allTypes,
 						typeRepresentatives.strings
 					);
 
@@ -129,11 +135,10 @@ describe('handshake', function () {
 					});
 
 					invalidTypes.forEach(function (type) {
-
 						it('should call callback with error.description when input is: ' + type.description, function (done) {
 							headers.nonce = type.input;
 							handshake(headers, function (err) {
-								expect(err.description).to.equal('#/nonce: Expected type string but found type ' + type.expectation);
+								expect(err.description).to.equal('nonce: Expected type string but found type ' + type.expectation);
 								done();
 							});
 						});
@@ -148,9 +153,7 @@ describe('handshake', function () {
 					});
 
 					validValues.forEach(function (input) {
-
 						it('should call callback with error = null when input is:' + input, function (done) {
-
 							handshake(headers, function (err) {
 								expect(err).to.not.exist;
 								done();
@@ -165,7 +168,7 @@ describe('handshake', function () {
 						return Math.floor(Math.random() * (Number.MAX_VALUE));
 					});
 
-					var invalidTypes = _.difference(typeRepresentatives.allTypes, 
+					var invalidTypes = _.difference(typeRepresentatives.allTypes,
 						typeRepresentatives.positiveIntegers,
 						typeRepresentatives.negativeIntegers,
 						typeRepresentatives.positiveNumbers,
@@ -177,11 +180,10 @@ describe('handshake', function () {
 						.concat(typeRepresentatives.negativeNumbers);
 
 					invalidTypes.forEach(function (type) {
-
 						it('should call callback with error.description when input is: ' + type.description, function (done) {
 							headers.height = type.input;
 							handshake(headers, function (err) {
-								expect(err.description).to.equal('#/height: Expected type integer but found type ' + type.expectation);
+								expect(err.description).to.equal('height: Expected type integer but found type ' + type.expectation);
 								done();
 							});
 						});
@@ -196,7 +198,6 @@ describe('handshake', function () {
 					});
 
 					validValues.forEach(function (input) {
-
 						it('should call callback with error = null when input is: ' + input, function (done) {
 							headers.height = input;
 							handshake(headers, function (err) {
@@ -213,16 +214,15 @@ describe('handshake', function () {
 						return randomstring.generate(64);
 					});
 
-					var invalidTypes = _.difference(typeRepresentatives.allTypes, 
+					var invalidTypes = _.difference(typeRepresentatives.allTypes,
 						typeRepresentatives.strings
 					);
 
 					invalidTypes.forEach(function (type) {
-
 						it('should call callback with error.description when input is: ' + type.description, function (done) {
 							headers.nethash = type.input;
 							handshake(headers, function (err) {
-								expect(err.description).to.equal('#/nethash: Expected type string but found type ' + type.expectation);
+								expect(err.description).to.equal('nethash: Expected type string but found type ' + type.expectation);
 								done();
 							});
 						});
@@ -239,16 +239,15 @@ describe('handshake', function () {
 
 				describe('version', function () {
 
-					var invalidTypes = _.difference(typeRepresentatives.allTypes, 
+					var invalidTypes = _.difference(typeRepresentatives.allTypes,
 						typeRepresentatives.strings
 					);
 
 					invalidTypes.forEach(function (type) {
-
 						it('should call callback with error.description when input is: ' + type.description, function (done) {
 							headers.version = type.input;
 							handshake(headers, function (err) {
-								expect(err.description).to.equal('#/version: Expected type string but found type ' + type.expectation);
+								expect(err.description).to.equal('version: Expected type string but found type ' + type.expectation);
 								done();
 							});
 						});
@@ -268,7 +267,7 @@ describe('handshake', function () {
 					it('should call callback with error for required property: ' + property, function (done) {
 						headers[property] = undefined;
 						handshake(headers, function (err) {
-							expect(err.description).to.equal('#/: Missing required property: ' + property);
+							expect(err.description).to.equal(': Missing required property: ' + property);
 							done();
 						});
 					});

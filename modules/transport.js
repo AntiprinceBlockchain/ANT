@@ -1,10 +1,21 @@
+/*
+ * Copyright © 2018 Lisk Foundation
+ *
+ * See the LICENSE file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with the Lisk Foundation,
+ * no part of this software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ */
 'use strict';
 
 var async = require('async');
 var crypto = require('crypto');
-var extend = require('extend');
 var ip = require('ip');
-var zlib = require('zlib');
 
 var Broadcaster = require('../logic/broadcaster.js');
 var bignum = require('../helpers/bignum.js');
@@ -13,13 +24,11 @@ var failureCodes = require('../api/ws/rpc/failureCodes');
 var Peer = require('../logic/peer');
 var PeerUpdateError = require('../api/ws/rpc/failureCodes').PeerUpdateError;
 var Rules = require('../api/ws/workers/rules');
-var schema = require('../schema/transport.js');
-var sql = require('../sql/transport.js');
 var System = require('../modules/system');
 var wsRPC = require('../api/ws/rpc/wsRPC').wsRPC;
 
 // Private fields
-var modules, library, self, __private = {};
+var modules, definitions, library, self, __private = {};
 
 __private.headers = {};
 __private.loaded = false;
@@ -120,7 +129,7 @@ __private.receiveSignatures = function (query, cb) {
 
 	async.series({
 		validateSchema: function (seriesCb) {
-			library.schema.validate(query, schema.signatures, function (err) {
+			library.schema.validate(query, definitions.WSSignaturesList, function (err) {
 				if (err) {
 					return setImmediate(seriesCb, 'Invalid signatures body');
 				} else {
@@ -157,7 +166,7 @@ __private.receiveSignatures = function (query, cb) {
  * @return {setImmediateCallback} cb | error messages
  */
 __private.receiveSignature = function (query, cb) {
-	library.schema.validate({signature: query}, schema.signature, function (err) {
+	library.schema.validate(query, definitions.Signature, function (err) {
 		if (err) {
 			return setImmediate(cb, 'Invalid signature body ' + err[0].message);
 		}
@@ -311,6 +320,8 @@ Transport.prototype.onBind = function (scope) {
 		transactions: scope.transactions
 	};
 
+	definitions = scope.swagger.definitions;
+
 	__private.headers = System.getHeaders();
 	__private.broadcaster.bind(
 		scope.peers,
@@ -368,7 +379,7 @@ Transport.prototype.onUnconfirmedTransaction = function (transaction, broadcast)
  * @param {Object} broadcast
  * @emits blocks/change
  */
-Transport.prototype.onNewBlock = function (block, broadcast) {
+Transport.prototype.onBroadcastBlock = function (block, broadcast) {
 	if (broadcast) {
 		modules.system.update(function () {
 			if (__private.broadcaster.maxRelays(block)) {
@@ -380,12 +391,13 @@ Transport.prototype.onNewBlock = function (block, broadcast) {
 				if (!peers || peers.length === 0) {
 					return library.logger.debug('Broadcasting block aborted - active peer list empty');
 				}
-				async.each(peers.filter(function (peer) { return peer.state === Peer.STATE.CONNECTED; }), function (peer, cb) {
+				async.each(peers, function (peer, cb) {
 					peer.rpc.updateMyself(library.logic.peers.me(), function (err) {
 						if (err) {
+							library.logger.debug('Failed to notify peer about self',  err);
 							__private.removePeer({peer: peer, code: 'ECOMMUNICATION'});
 						} else {
-							library.logger.debug('Peer notified correctly after update: ' + peer.string);
+							library.logger.debug('Successfully notified peer about self', peer.string);
 						}
 						return cb();
 					});
@@ -424,7 +436,7 @@ Transport.prototype.isLoaded = function () {
 Transport.prototype.shared = {
 	blocksCommon: function (query, cb) {
 		query = query || {};
-		return library.schema.validate(query, schema.commonBlock, function (err, valid) {
+		return library.schema.validate(query, definitions.WSBlocksCommonRequest, function (err, valid) {
 			if (err) {
 				err = err[0].message + ': ' + err[0].path;
 				library.logger.debug('Common block request validation failed', {err: err.toString(), req: query});
@@ -449,7 +461,7 @@ Transport.prototype.shared = {
 				return setImmediate(cb, 'Invalid block id sequence');
 			}
 
-			library.db.query(sql.getCommonBlock, escapedIds).then(function (rows) {
+			library.db.blocks.getBlocksForTransport(escapedIds).then(function (rows) {
 				return setImmediate(cb, null, { success: true, common: rows[0] || null });
 			}).catch(function (err) {
 				library.logger.error(err.stack);
@@ -553,7 +565,7 @@ Transport.prototype.shared = {
 	},
 
 	postTransactions: function (query, cb) {
-		library.schema.validate(query, schema.transactions, function (err) {
+		library.schema.validate(query, definitions.WSTransactionsRequest, function (err) {
 			if (err) {
 				return setImmediate(cb, null, {success: false, message: err});
 			}
@@ -587,7 +599,7 @@ Transport.prototype.shared = {
  * @param {function} cb
  */
 __private.checkInternalAccess = function (query, cb) {
-	library.schema.validate(query, schema.internalAccess, function (err) {
+	library.schema.validate(query, definitions.WSAccessObject, function (err) {
 		if (err) {
 			return setImmediate(cb, err[0].message);
 		}

@@ -1,3 +1,16 @@
+/*
+ * Copyright © 2018 Lisk Foundation
+ *
+ * See the LICENSE file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with the Lisk Foundation,
+ * no part of this software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ */
 'use strict';/*eslint*/
 
 var crypto = require('crypto');
@@ -15,7 +28,6 @@ var modulesLoader = require('../../common/modulesLoader.js');
 var randomUtil = require('../../common/utils/random');
 
 var Dapp = rewire('../../../logic/dapp.js');
-var sql = require('../../../sql/dapps.js');
 var constants = require('../../../helpers/constants');
 
 var typeRepresentatives = require('../../fixtures/typesRepresentatives.js');
@@ -36,18 +48,26 @@ describe('dapp', function () {
 	var dbStub;
 
 	var transaction;
-	var rawTransaction; 
+	var rawTransaction;
 	var sender;
 
 	beforeEach(function () {
 		dbStub = {
-			query: sinon.stub()
+			dapps: {
+				countByTransactionId: sinon.stub(),
+				countByOutTransactionId: sinon.stub(),
+				getExisting: sinon.stub(),
+				list: sinon.stub(),
+				getGenesis: sinon.stub()
+			}
 		};
 		dapp = new Dapp(dbStub, modulesLoader.scope.logger, modulesLoader.scope.schema, modulesLoader.scope.network);
 	});
 
 	afterEach(function () {
-		dbStub.query.reset();
+		Object.keys(dbStub.dapps).forEach(function (key) {
+			dbStub.dapps[key].reset();
+		});
 	});
 
 	describe('with dummy data', function () {
@@ -164,7 +184,7 @@ describe('dapp', function () {
 						});
 					});
 				});
-				
+
 				describe('when dapp icon link is invalid', function () {
 
 					it('should call callback with error = "Invalid application icon file type"', function (done) {
@@ -286,10 +306,10 @@ describe('dapp', function () {
 
 				describe('when dbStub rejects proimse', function () {
 
-					var dbError = new Error(); 
+					var dbError = new Error();
 
 					it('should call callback with error = "DApp#verify error"', function (done) {
-						dbStub.query.withArgs(sql.getExisting, {
+						dbStub.dapps.getExisting.withArgs({
 							name: transaction.asset.dapp.name,
 							link: transaction.asset.dapp.link || null,
 							transactionId: transaction.id
@@ -316,7 +336,7 @@ describe('dapp', function () {
 
 					// TODO: Some of the code these tests are testing is redundant. We should review and refactor it.
 					it('should call callback with error', function (done) {
-						dbStub.query.withArgs(sql.getExisting, dappParams).resolves([{
+						dbStub.dapps.getExisting.withArgs(dappParams).resolves([{
 							name: transaction.asset.dapp.name
 						}]);
 
@@ -328,7 +348,7 @@ describe('dapp', function () {
 
 					it('should call callback with error if application link already exists', function (done) {
 
-						dbStub.query.withArgs(sql.getExisting, dappParams).resolves([{
+						dbStub.dapps.getExisting.withArgs(dappParams).resolves([{
 							link: transaction.asset.dapp.link
 						}]);
 
@@ -339,7 +359,7 @@ describe('dapp', function () {
 					});
 
 					it('should call callback with error if application already exists', function (done) {
-						dbStub.query.withArgs(sql.getExisting, {
+						dbStub.dapps.getExisting.withArgs({
 							name: transaction.asset.dapp.name,
 							link: transaction.asset.dapp.link || null,
 							transactionId: transaction.id
@@ -356,7 +376,7 @@ describe('dapp', function () {
 			describe('when transaction is valid', function (done) {
 
 				beforeEach(function () {
-					dbStub.query.withArgs(sql.getExisting, {
+					dbStub.dapps.getExisting.withArgs({
 						name: transaction.asset.dapp.name,
 						link: transaction.asset.dapp.link || null,
 						transactionId: transaction.id
@@ -374,8 +394,8 @@ describe('dapp', function () {
 
 				it('should call dbStub.query with correct params', function (done) {
 					dapp.verify(transaction, sender, function (err, res) {
-						expect(dbStub.query.calledOnce).to.equal(true);
-						expect(dbStub.query.calledWithExactly(sql.getExisting, {
+						expect(dbStub.dapps.getExisting.calledOnce).to.equal(true);
+						expect(dbStub.dapps.getExisting.calledWithExactly({
 							name: transaction.asset.dapp.name,
 							link: transaction.asset.dapp.link || null,
 							transactionId: transaction.id
@@ -655,7 +675,7 @@ describe('dapp', function () {
 
 				describe('category', function () {
 
-					var invalidTypes = _.difference(typeRepresentatives.allTypes, 
+					var invalidTypes = _.difference(typeRepresentatives.allTypes,
 						typeRepresentatives.positiveIntegers,
 						typeRepresentatives.negativeIntegers,
 						typeRepresentatives.others
@@ -700,7 +720,7 @@ describe('dapp', function () {
 
 				describe('name', function () {
 
-					var invalidTypes = _.difference(typeRepresentatives.allTypes, 
+					var invalidTypes = _.difference(typeRepresentatives.allTypes,
 						typeRepresentatives.strings,
 						typeRepresentatives.others
 					);
@@ -746,7 +766,7 @@ describe('dapp', function () {
 
 				describe('description', function () {
 
-					var invalidTypes = _.difference(typeRepresentatives.allTypes, 
+					var invalidTypes = _.difference(typeRepresentatives.allTypes,
 						typeRepresentatives.strings,
 						typeRepresentatives.others
 					);
@@ -783,7 +803,7 @@ describe('dapp', function () {
 
 				describe('tags', function () {
 
-					var invalidTypes = _.difference(typeRepresentatives.allTypes, 
+					var invalidTypes = _.difference(typeRepresentatives.allTypes,
 						typeRepresentatives.strings,
 						typeRepresentatives.others
 					);
@@ -819,7 +839,7 @@ describe('dapp', function () {
 
 				describe('type', function () {
 
-					var invalidTypes = _.difference(typeRepresentatives.allTypes, 
+					var invalidTypes = _.difference(typeRepresentatives.allTypes,
 						typeRepresentatives.positiveIntegers,
 						typeRepresentatives.negativeIntegers,
 						typeRepresentatives.others
@@ -829,8 +849,8 @@ describe('dapp', function () {
 
 					var invalidTypesValues = [-0, -1, -2].concat(typeRepresentatives.negativeIntegers);
 
-					// No max limit set on type. Type verification is partially handled here 
-					// and the rest is handled in verify function. 
+					// No max limit set on type. Type verification is partially handled here
+					// and the rest is handled in verify function.
 					// TODO: Do stronger schema checks
 					var validTypes = [1, 2, 4, 11].concat(_.map(typeRepresentatives.positiveIntegers, 'input'));
 					invalidTypes.forEach(function (type) {
@@ -867,12 +887,12 @@ describe('dapp', function () {
 
 				describe('link', function () {
 
-					var invalidTypes = _.difference(typeRepresentatives.allTypes, 
+					var invalidTypes = _.difference(typeRepresentatives.allTypes,
 						typeRepresentatives.strings,
 						typeRepresentatives.others
 					);
 
-					// TODO: Schema checks only check whether property is a string or not, 
+					// TODO: Schema checks only check whether property is a string or not,
 					// and not whether value is actually a link. We need to handle it here.
 					var invalidLinks = [_.fill(new Array(2002), 'a'), _.fill(new Array(2001), 'a')];
 					var validLinks = _.fill(new Array(5), '').map(function () {
@@ -906,12 +926,12 @@ describe('dapp', function () {
 
 				describe('icon', function () {
 
-					var invalidTypes = _.difference(typeRepresentatives.allTypes, 
+					var invalidTypes = _.difference(typeRepresentatives.allTypes,
 						typeRepresentatives.strings,
 						typeRepresentatives.others
 					);
 
-					// TODO: Schema checks only check whether property is a string or not, 
+					// TODO: Schema checks only check whether property is a string or not,
 					// and not whether value is actually a link. We need to handle it here.
 					var invalidIcons = [_.fill(new Array(2002), 'a'), _.fill(new Array(2001), 'a')];
 					var validIcons = _.fill(new Array(5), '').map(function () {
@@ -995,54 +1015,6 @@ describe('dapp', function () {
 				it('should return result containing dapp property', function () {
 					expect(dapp.dbRead(rawTransaction)).to.have.nested.property('dapp.type').to.eql(rawTransaction.dapp_type);
 				});
-			});
-		});
-
-		describe('dbSave', function () {
-
-			var dbSaveResult;
-
-			beforeEach(function () {
-				dbSaveResult = dapp.dbSave(transaction);
-			});
-
-			it('should return result containing table = "dapps"', function () {
-				expect(dbSaveResult).to.have.property('table').equal('dapps');
-			});
-			it('should return result containing fields = ["type", "name", "description", "tags", "link", "category", "icon", "transactionId"]', function () {
-				expect(dbSaveResult).to.have.property('fields').eql(['type', 'name', 'description', 'tags', 'link', 'category', 'icon', 'transactionId']);
-			});
-
-			it('should return result containing values', function () {
-				expect(dbSaveResult).to.have.property('values');
-			});
-
-			it('should return result containing values.type = transaction.asset.dapp.type', function () {
-				expect(dbSaveResult).to.have.nested.property('values.type').equal(transaction.asset.dapp.type);
-			});
-
-			it('should return result containing values.name = transaction.asset.dapp.name', function () {
-				expect(dbSaveResult).to.have.nested.property('values.name').equal(transaction.asset.dapp.name);
-			});
-
-			it('should return result containing values.description = transaction.asset.dapp.description', function () {
-				expect(dbSaveResult).to.have.nested.property('values.description').equal(transaction.asset.dapp.description);
-			});
-
-			it('should return result containing values.tags = transaction.asset.dapp.tags', function () {
-				expect(dbSaveResult).to.have.nested.property('values.tags').equal(transaction.asset.dapp.tags);
-			});
-
-			it('should return result containing values.icon = transaction.asset.dapp.icon', function () {
-				expect(dbSaveResult).to.have.nested.property('values.icon').equal(transaction.asset.dapp.icon);
-			});
-
-			it('should return result containing values.category = transaction.asset.dapp.category', function () {
-				expect(dbSaveResult).to.have.nested.property('values.category').equal(transaction.asset.dapp.category);
-			});
-
-			it('should return result containing values.transactionId = trs.id', function () {
-				expect(dbSaveResult).to.have.nested.property('values.transactionId').equal(transaction.id);
 			});
 		});
 

@@ -1,11 +1,24 @@
+####################################################################################
+# Copyright © 2018 Lisk Foundation
+#
+# See the LICENSE file at the top-level directory of this distribution
+# for licensing information.
+#
+# Unless otherwise agreed in a custom licensing agreement with the Lisk Foundation,
+# no part of this software, including this file, may be copied, modified,
+# propagated, or distributed except according to the terms contained in the
+# LICENSE file.
+#
+# Removal or modification of this copyright notice is prohibited.
+####################################################################################
 swagger: '2.0'
 
 info:
   description: Lisk API Documentation
   title: Lisk API Documentation
-  version: '1.0.19'
+  version: '1.0.20'
   contact:
-    email: isabella@lightcurve.io
+    email: admin@lisk.io
   license:
     name: GPL v3.0
     url: https://www.gnu.org/licenses/gpl-3.0.en.html
@@ -38,9 +51,11 @@ tags:
 - name: Votes
   description: Votes related API calls
 - name: Private
+  x-private: true
   description: Private endpoint only authorized to whitelisted IPs
 
 schemes:
+  - http
   - https
 
 paths:
@@ -327,6 +342,7 @@ paths:
 
   /node/status/forging:
     x-swagger-router-controller: node
+    x-private: true
     get:
       tags:
         - Node
@@ -443,9 +459,9 @@ paths:
             - unconfirmed
             - unsigned
         - $ref: '#/parameters/transactionId'
-        - $ref: '#/parameters/recipientAddress'
+        - $ref: '#/parameters/recipientId'
         - $ref: '#/parameters/recipientPublicKey'
-        - $ref: '#/parameters/senderAddress'
+        - $ref: '#/parameters/senderId'
         - $ref: '#/parameters/senderPublicKey'
         - $ref: '#/parameters/transactionType'
         - $ref: '#/parameters/limit'
@@ -793,9 +809,9 @@ paths:
         - application/json
       parameters:
         - $ref: '#/parameters/transactionId'
-        - $ref: '#/parameters/recipientAddress'
+        - $ref: '#/parameters/recipientId'
         - $ref: '#/parameters/recipientPublicKey'
-        - $ref: '#/parameters/senderAddress'
+        - $ref: '#/parameters/senderId'
         - $ref: '#/parameters/senderPublicKey'
         - $ref: '#/parameters/transactionType'
         - $ref: '#/parameters/height'
@@ -875,6 +891,9 @@ paths:
           description: Too many requests, exceeded rate limit
           schema:
             $ref: '#/definitions/RequestLimitError'
+
+  /spec:
+    x-swagger-pipe: swagger_raw_pipe
 
 parameters:
   ip:
@@ -995,8 +1014,8 @@ parameters:
     format: id
     minLength: 1
     maxLength: 20
-  recipientAddress:
-    name: recipientAddress
+  recipientId:
+    name: recipientId
     in: query
     description: Recipient address to query
     type: string
@@ -1010,8 +1029,8 @@ parameters:
     type: string
     format: publicKey
     minLength: 1
-  senderAddress:
-    name: senderAddress
+  senderId:
+    name: senderId
     in: query
     description: Sender address to query
     type: string
@@ -1410,7 +1429,7 @@ definitions:
       - amount
       - fee
       - senderPublicKey
-      - recipientAddress
+      - recipientId
       - timestamp
       - asset
       - signature
@@ -1443,7 +1462,7 @@ definitions:
       timestamp:
         type: integer
         example: 28227090
-      senderAddress:
+      senderId:
         type: string
         format: address
         example: 12668885769632475474L
@@ -1455,7 +1474,7 @@ definitions:
         type: string
         format: publicKey
         example: 2ca9a7143fc721fdc540fef893b27e8d648d2288efa61e56264edf01a2c23079
-      recipientAddress:
+      recipientId:
         type: string
         format: address
         example: 12668885769632475474L
@@ -1585,6 +1604,35 @@ definitions:
       totalForged:
         type: string
         example: "65000000"
+
+  CommonBlock:
+    x-private: true
+    type: object
+    required:
+      - id
+      - height
+      - previousBlock
+    properties:
+      id:
+        type: string
+        format: id
+        minLength: 1
+        maxLength: 20
+        example: "6258354802676165798"
+      height:
+        type: integer
+        example: 123
+        minimum: 1
+      previousBlock:
+        type: string
+        format: id
+        example: "15918760246746894806"
+
+  BlocksList:
+    x-private: true
+    type: array
+    items:
+      $ref: '#/definitions/Block'
 
   ForgingStatus:
     type: object
@@ -1718,14 +1766,7 @@ definitions:
     type: object
     required:
       - ip
-      - httpPort
       - wsPort
-      - os
-      - version
-      - state
-      - height
-      - broadhash
-      - nonce
     properties:
       ip:
         type: string
@@ -1769,6 +1810,17 @@ definitions:
         type: string
         example: sYHEDBKcScaAAAYg
         minLength: 1
+
+  PeersList:
+    x-private: true
+    type: object
+    required:
+      - peers
+    properties:
+      peers:
+        type: array
+        items:
+          $ref: '#/definitions/Peer'
 
   Fees:
     type: object
@@ -2304,3 +2356,160 @@ definitions:
       balance:
         type: string
         example: 1081560729258
+
+  WSPeerHeaders:
+    x-private: true
+    type: object
+    required:
+      - httpPort
+      - wsPort
+      - os
+      - version
+      - height
+      - nethash
+      - nonce
+    properties:
+      httpPort:
+        type: integer
+        example: 8000
+        format: int32
+        minimum: 1
+        maximum: 65535
+      wsPort:
+        type: integer
+        example: 8001
+        format: int32
+        minimum: 1
+        maximum: 65535
+      os:
+        type: string
+        example: debian
+      version:
+        type: string
+        example: v0.8.0
+        format: version
+        minLength: 5
+        maxLength: 12
+      height:
+        type: integer
+        example: 123
+      nethash:
+        type: string
+        maxLength: 64
+      broadhash:
+        type: string
+        example: 258974416d58533227c6a3da1b6333f0541b06c65b41e45cf31926847a3db1ea
+        format: hex
+      nonce:
+        type: string
+        example: sYHEDBKcScaAAAYg
+        minLength: 16
+        maxLength: 16
+
+  WSPeerUpdateRequest:
+    x-private: true
+    type: object
+    required:
+      - data
+      - socketId
+    properties:
+      data:
+        type: object
+        required:
+          - nonce
+        properties:
+          nethash:
+            type: string
+            maxLength: 64
+          broadhash:
+            type: string
+            format: hex
+          height:
+            type: integer
+            minimum: 1
+          nonce:
+            type: string
+            minLength: 16
+            maxLength: 16
+      socketId:
+        type: string
+      workerId:
+        type: number
+
+  WSSignaturesList:
+    x-private: true
+    type: object
+    required:
+      - signatures
+    properties:
+      signatures:
+        type: array
+        items:
+          $ref: '#/definitions/Signature'
+        minItems: 1
+        maxItems: 25
+
+  WSBlocksCommonRequest:
+    x-private: true
+    type: object
+    required:
+      - ids
+    properties:
+      ids:
+        type: string
+        format: csv
+
+  WSTransactionsRequest:
+    x-private: true
+    type: object
+    required:
+      - transactions
+    properties:
+      transactions:
+        type: array
+        items:
+          $ref: '#/definitions/Transaction'
+        minItems: 1
+        maxItems: 25
+
+  WSAccessObject:
+    x-private: true
+    type: object
+    required:
+      - peer
+      - authKey
+      - updateType
+    properties:
+      peer:
+        type: object
+      authKey:
+        type: string
+      updateType:
+        type: integer
+        minimum: 0
+        maximum: 1
+
+  WSTransactionsResponse:
+    x-private: true
+    type: object
+    required:
+      - transactions
+    properties:
+      transactions:
+        type: array
+        uniqueItems: true
+        maxItems: 100
+        items:
+          type: object
+
+  WSSignaturesResponse:
+    x-private: true
+    required:
+      - signatures
+    properties:
+      signatures:
+        type: array
+        uniqueItems: true
+        maxItems: 100
+        items:
+          type: object

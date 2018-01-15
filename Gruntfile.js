@@ -1,3 +1,16 @@
+/*
+ * Copyright © 2018 Lisk Foundation
+ *
+ * See the LICENSE file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with the Lisk Foundation,
+ * no part of this software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ */
 'use strict';
 
 var moment = require('moment');
@@ -62,53 +75,23 @@ module.exports = function (grunt) {
 				command: 'cd ' + version_dir + '/ && touch build && echo "v' + today + '" > build'
 			},
 
-			testUnit: {
-				command: 'export NODE_ENV=test TEST_TYPE=unit && node test/common/parallelTests.js unit',
-				maxBuffer: maxBufferSize
-			},
-
-			testUnitExtensive: {
-				command: 'export NODE_ENV=test TEST_TYPE=unit && node test/common/parallelTests.js unit @slow',
-				maxBuffer: maxBufferSize
-			},
-
-			testFunctionalWs: {
-				command: 'export NODE_ENV=test TEST_TYPE=func && node test/common/parallelTests.js functional-ws',
-				maxBuffer: maxBufferSize
-			},
-
-			testFunctionalWsExtensive: {
-				command: 'export NODE_ENV=test TEST_TYPE=func && node test/common/parallelTests.js functional-ws @slow',
-				maxBuffer: maxBufferSize
-			},
-
-			testFunctionalHttpGet: {
-				command: 'export NODE_ENV=test TEST_TYPE=func && node test/common/parallelTests.js functional-http-get',
-				maxBuffer: maxBufferSize
-			},
-
-			testFunctionalHttpGetExtensive: {
-				command: 'export NODE_ENV=test TEST_TYPE=func && node test/common/parallelTests.js functional-http-get @slow',
-				maxBuffer: maxBufferSize
-			},
-
-			testFunctionalHttpPost: {
-				command: 'export NODE_ENV=test TEST_TYPE=func && node test/common/parallelTests.js functional-http-post',
-				maxBuffer: maxBufferSize
-			},
-
-			testFunctionalSystem: {
-				command: 'export NODE_ENV=test TEST_TYPE=func && node test/common/parallelTests.js functional-system',
-				maxBuffer: maxBufferSize
-			},
-
-			testIntegration: {
-				command: './node_modules/.bin/_mocha --bail test/integration/index.js --grep @slow --invert',
-				maxBuffer: maxBufferSize
-			},
-
-			testIntegrationExtensive: {
-				command: './node_modules/.bin/_mocha --bail test/integration/index.js',
+			mocha: {
+				cmd: function (tag, suite, section) {
+					if (suite === 'integration') {
+						var slowTag = '';
+						if (tag !== 'slow') {
+							slowTag = '--grep @slow --invert';
+						}
+						return './node_modules/.bin/_mocha --bail test/integration/index.js ' + slowTag;
+					} else {
+						var toExecute = [
+							tag,
+							suite,
+							section
+						].filter(function (val) { return val; }).join(' ');
+						return 'node test/common/parallelTests.js ' + toExecute;
+					}
+				},
 				maxBuffer: maxBufferSize
 			},
 
@@ -166,25 +149,14 @@ module.exports = function (grunt) {
 	grunt.loadNpmTasks('grunt-contrib-compress');
 	grunt.loadNpmTasks('grunt-eslint');
 
-	grunt.registerTask('default', ['release']);
 	grunt.registerTask('release', ['exec:folder', 'obfuscator', 'exec:createBundles', 'exec:package', 'exec:build', 'compress']);
 	grunt.registerTask('coverageReport', ['exec:coverageReport']);
 	grunt.registerTask('eslint-nofix', ['eslint']);
-	grunt.registerTask('test', ['test-unit', 'test-functional', 'test-integration']);
-	grunt.registerTask('test-unit', ['eslint', 'exec:testUnit']);
-	grunt.registerTask('test-unit-extensive', ['eslint', 'exec:testUnitExtensive']);
-	grunt.registerTask('test-functional', ['test-functional-ws', 'test-functional-http-get', 'test-functional-http-post']);
-	grunt.registerTask('test-functional-ws', ['eslint', 'exec:testFunctionalWs']);
-	grunt.registerTask('test-functional-ws-extensive', ['eslint', 'exec:testFunctionalWsExtensive']);
-	grunt.registerTask('test-functional-http-get', ['eslint', 'exec:testFunctionalHttpGet']);
-	grunt.registerTask('test-functional-http-get-extensive', ['eslint', 'exec:testFunctionalHttpGetExtensive']);
-	grunt.registerTask('test-functional-http-post', ['eslint', 'exec:testFunctionalHttpPost']);
-	grunt.registerTask('test-functional-system', ['eslint', 'exec:testFunctionalSystem']);
-	grunt.registerTask('test-integration', ['eslint', 'exec:testIntegration']);
-	grunt.registerTask('test-integration-extensive', ['eslint', 'exec:testIntegrationExtensive']);
 
 	grunt.registerTask('eslint-fix', 'Run eslint and fix formatting', function () {
 		grunt.config.set('eslint.options.fix', true);
 		grunt.task.run('eslint');
 	});
+
+	grunt.registerTask('default', 'mocha');
 };

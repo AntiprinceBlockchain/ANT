@@ -1,3 +1,16 @@
+/*
+ * Copyright © 2018 Lisk Foundation
+ *
+ * See the LICENSE file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with the Lisk Foundation,
+ * no part of this software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ */
 'use strict';
 
 var async = require('async');
@@ -5,6 +18,7 @@ var constants = require('../helpers/constants.js');
 var jobsQueue = require('../helpers/jobsQueue.js');
 var extend = require('extend');
 var _ = require('lodash');
+var bson = require('../helpers/bson.js');
 
 // Private fields
 var modules, library, self, __private = {};
@@ -153,6 +167,16 @@ Broadcaster.prototype.broadcast = function (params, options, cb) {
 		},
 		function sendToPeer (peers, waterCb) {
 			library.logger.debug('Begin broadcast', options);
+
+			if (options.data.block) {
+				try {
+					options.data.block = bson.serialize(options.data.block);
+				} catch (err) {
+					library.logger.error('Broadcast serialization failed:', err);
+					return setImmediate(cb, err);
+				}
+			}
+
 			if (params.limit === self.config.peerLimit) {
 				peers = peers.slice(0, self.config.broadcastLimit);
 			}

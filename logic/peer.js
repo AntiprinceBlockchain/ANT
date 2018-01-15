@@ -1,3 +1,16 @@
+/*
+ * Copyright © 2018 Lisk Foundation
+ *
+ * See the LICENSE file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with the Lisk Foundation,
+ * no part of this software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ */
 'use strict';
 
 var _ = require('lodash');
@@ -72,15 +85,6 @@ Peer.prototype.headers = [
 	'nonce'
 ];
 
-Peer.prototype.nullable = [
-	'os',
-	'version',
-	'broadhash',
-	'height',
-	'clock',
-	'updated'
-];
-
 Peer.STATE = {
 	BANNED: 0,
 	DISCONNECTED: 1,
@@ -127,7 +131,10 @@ Peer.prototype.normalize = function (peer) {
 	}
 
 	peer.wsPort = this.parseInt(peer.wsPort, 0);
-	peer.httpPort = this.parseInt(peer.httpPort, 0);
+
+	if (peer.httpPort != null) {
+		peer.httpPort = this.parseInt(peer.httpPort, 0);
+	}
 	peer.state = this.parseInt(peer.state, Peer.STATE.DISCONNECTED);
 
 	return peer;
@@ -186,12 +193,6 @@ Peer.prototype.object = function () {
 	_.each(this.properties, function (key) {
 		copy[key] = this[key];
 	}.bind(this));
-
-	_.each(this.nullable, function (key) {
-		if (!copy[key]) {
-			copy[key] = null;
-		}
-	});
 
 	delete copy.rpc;
 	return copy;

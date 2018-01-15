@@ -1,3 +1,16 @@
+/*
+ * Copyright © 2018 Lisk Foundation
+ *
+ * See the LICENSE file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with the Lisk Foundation,
+ * no part of this software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ */
 'use strict';
 
 var test = require('../../functional.js');
@@ -104,7 +117,7 @@ describe('POST /api/transactions (type 7) outTransfer dapp', function () {
 				transaction.asset.outTransfer.dappId = 1.2;
 
 				return sendTransactionPromise(transaction, errorCodes.PROCESSING_ERROR).then(function (res) {
-					res.body.message.should.be.equal('Invalid transaction body - Failed to validate outTransfer schema: Expected type string but found type number');
+					res.body.message.should.be.equal('Invalid transaction body - Failed to validate outTransfer schema: Expected type string but found type number, Object didn\'t pass validation for format id: 1.2');
 					badTransactions.push(transaction);
 				});
 			});
@@ -124,7 +137,7 @@ describe('POST /api/transactions (type 7) outTransfer dapp', function () {
 				transaction.asset.outTransfer.dappId = {};
 
 				return sendTransactionPromise(transaction, errorCodes.PROCESSING_ERROR).then(function (res) {
-					res.body.message.should.be.equal('Invalid transaction body - Failed to validate outTransfer schema: Expected type string but found type object');
+					res.body.message.should.be.equal('Invalid transaction body - Failed to validate outTransfer schema: Expected type string but found type object, Object didn\'t pass validation for format id: {}');
 					badTransactions.push(transaction);
 				});
 			});
@@ -150,7 +163,7 @@ describe('POST /api/transactions (type 7) outTransfer dapp', function () {
 		});
 
 		describe('transactionId', function () {
-			
+
 			it('without should fail', function () {
 				transaction = lisk.transfer.createOutTransfer(randomUtil.guestbookDapp.id, randomUtil.transaction().id, accountFixtures.genesis.address, Date.now(), account.password);
 				delete transaction.asset.outTransfer.transactionId;
@@ -176,7 +189,7 @@ describe('POST /api/transactions (type 7) outTransfer dapp', function () {
 				transaction.asset.outTransfer.transactionId = 1.2;
 
 				return sendTransactionPromise(transaction, errorCodes.PROCESSING_ERROR).then(function (res) {
-					res.body.message.should.be.equal('Invalid transaction body - Failed to validate outTransfer schema: Expected type string but found type number');
+					res.body.message.should.be.equal('Invalid transaction body - Failed to validate outTransfer schema: Expected type string but found type number, Object didn\'t pass validation for format id: 1.2');
 					badTransactions.push(transaction);
 				});
 			});
@@ -196,7 +209,7 @@ describe('POST /api/transactions (type 7) outTransfer dapp', function () {
 				transaction.asset.outTransfer.transactionId = {};
 
 				return sendTransactionPromise(transaction, errorCodes.PROCESSING_ERROR).then(function (res) {
-					res.body.message.should.be.equal('Invalid transaction body - Failed to validate outTransfer schema: Expected type string but found type object');
+					res.body.message.should.be.equal('Invalid transaction body - Failed to validate outTransfer schema: Expected type string but found type object, Object didn\'t pass validation for format id: {}');
 					badTransactions.push(transaction);
 				});
 			});

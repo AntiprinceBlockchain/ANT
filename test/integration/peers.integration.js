@@ -1,3 +1,16 @@
+/*
+ * Copyright © 2018 Lisk Foundation
+ *
+ * See the LICENSE file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with the Lisk Foundation,
+ * no part of this software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ */
 'use strict';
 
 var _ = require('lodash');
@@ -14,7 +27,7 @@ var WAMPClient = require('wamp-socket-cluster/WAMPClient');
 var baseConfig = require('../data/config.json');
 
 var blockchainReady = require('../common/utils/waitFor').blockchainReady;
-var WSClient = require('../common/ws/client');
+var WSServerMaster = require('../common/ws/serverMaster');
 
 var Logger = require('../../logger');
 var logger = new Logger({filename: 'integrationTestsLogger.logs', echo: 'log'});
@@ -44,7 +57,7 @@ var monitorWSClient = {
 	hostname: '127.0.0.1',
 	wsPort: 'toOverwrite',
 	autoReconnect: true,
-	query: WSClient.generatePeerHeaders()
+	query: WSServerMaster.generatePeerHeaders()
 };
 
 monitorWSClient.query.wsPort = 9999;

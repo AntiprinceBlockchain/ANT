@@ -1,3 +1,16 @@
+/*
+ * Copyright © 2018 Lisk Foundation
+ *
+ * See the LICENSE file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with the Lisk Foundation,
+ * no part of this software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ */
 'use strict';
 
 var test = require('../functional.js');
@@ -15,12 +28,12 @@ var failureCodes = require('../../../api/ws/rpc/failureCodes');
 
 var ws = require('../../common/ws/communication');
 var wsServer = require('../../common/ws/server');
-var wsClient = require('../../common/ws/client');
+var WSServerMaster = require('../../common/ws/serverMaster');
 
 describe('handshake', function () {
 
 	var wsServerPort = 9999;
-	var frozenHeaders = wsClient.generatePeerHeaders('127.0.0.1', wsServerPort, wsServer.validNonce);
+	var frozenHeaders = WSServerMaster.generatePeerHeaders({wsPort: wsServerPort, nonce: wsServer.validNonce});
 	var validClientSocketOptions;
 	var clientSocket;
 	var currentConnectedSocket;
@@ -34,6 +47,12 @@ describe('handshake', function () {
 		clientSocket.on('connectAbort', connectAbortStub);
 		clientSocket.on('disconnect', disconnectStub);
 		clientSocket.on('error', errorStub);
+	}
+
+	function disconnect () {
+		if (clientSocket && clientSocket.id) {
+			clientSocket.disconnect();
+		}
 	}
 
 	function expectDisconnect (testContext, cb) {
@@ -82,9 +101,7 @@ describe('handshake', function () {
 	});
 
 	afterEach(function () {
-		if (clientSocket) {
-			clientSocket.disconnect();
-		}
+		disconnect();
 	});
 
 	describe('with invalid headers', function () {
@@ -125,7 +142,7 @@ describe('handshake', function () {
 				connect();
 				expectDisconnect(this, function (code, description) {
 					expect(code).equal(failureCodes.INVALID_HEADERS);
-					expect(description).contain('#/height: Expected type integer but found type not-a-number');
+					expect(description).contain('height: Expected type integer but found type not-a-number');
 					done();
 				});
 			});
@@ -174,7 +191,6 @@ describe('handshake', function () {
 			 * to: present nonce, present connectionId, present on master
 			 */
 			validClientSocketOptions.query.nonce = randomstring.generate(16);
-			connect();
 		});
 
 		describe('when present on master', function () {
@@ -213,11 +229,12 @@ describe('handshake', function () {
 			});
 		});
 
-		describe('when not present on master', function () {
+		describe('when not present on master @unstable', function () {
 
 			var wampClient = new WAMPClient();
 
 			beforeEach(function (done) {
+				connect();
 				wampClient.upgradeToWAMP(clientSocket);
 				setTimeout(function () {
 					validClientSocketOptions.query.state = 1;
@@ -232,10 +249,15 @@ describe('handshake', function () {
 				this.timeout(2000);
 			});
 
+			afterEach(function () {
+				disconnect();
+			});
+
 			describe('when nonce is not present', function () {
 
 				beforeEach(function () {
 					validClientSocketOptions.query.nonce = randomstring.generate(16);
+					disconnect();
 				});
 
 				it('should succeed when connectionId is present', function (done) {
@@ -251,6 +273,10 @@ describe('handshake', function () {
 			});
 
 			describe('when nonce is present', function () {
+
+				beforeEach(function () {
+					disconnect();
+				});
 
 				it('should succeed when connectionId is present', function (done) {
 					connect();

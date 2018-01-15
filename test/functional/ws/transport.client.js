@@ -1,3 +1,16 @@
+/*
+ * Copyright © 2018 Lisk Foundation
+ *
+ * See the LICENSE file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with the Lisk Foundation,
+ * no part of this software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ */
 'use strict';
 
 var test = require('../functional.js');
@@ -15,6 +28,7 @@ var wsRPC = require('../../../api/ws/rpc/wsRPC').wsRPC;
 var transport = require('../../../api/ws/transport');
 var System = require('../../../modules/system');
 
+var WSServer = require('../../common/ws/serverMaster');
 var WSClient = require('../../common/ws/client');
 
 describe('ClientRPCStub', function () {
@@ -85,7 +99,7 @@ describe('ClientRPCStub', function () {
 		var validHeaders;
 
 		beforeEach(function () {
-			validHeaders = WSClient.generatePeerHeaders();
+			validHeaders = WSServer.generatePeerHeaders();
 			System.setHeaders(validHeaders);
 		});
 
@@ -118,7 +132,7 @@ describe('ClientRPCStub', function () {
 				System.setHeaders(validHeaders);
 				validClientRPCStub.status(function (err) {
 					expect(err).to.have.property('code').equal(failureCodes.INVALID_HEADERS);
-					expect(err).to.have.property('description').equal('#/wsPort: Expected type integer but found type not-a-number');
+					expect(err).to.have.property('description').equal('wsPort: Expected type integer but found type not-a-number');
 					done();
 				});
 			});
@@ -137,7 +151,7 @@ describe('ClientRPCStub', function () {
 				System.setHeaders(validHeaders);
 				validClientRPCStub.status(function (err) {
 					expect(err).to.have.property('code').equal(failureCodes.INVALID_HEADERS);
-					expect(err).to.have.property('description').equal('#/nonce: String is too short (9 chars), minimum 16');
+					expect(err).to.have.property('description').equal('nonce: String is too short (9 chars), minimum 16');
 					done();
 				});
 			});
@@ -147,7 +161,7 @@ describe('ClientRPCStub', function () {
 				System.setHeaders(validHeaders);
 				validClientRPCStub.status(function (err) {
 					expect(err).to.have.property('code').equal(failureCodes.INVALID_HEADERS);
-					expect(err).to.have.property('description').equal('#/nonce: String is too long (26 chars), maximum 16');
+					expect(err).to.have.property('description').equal('nonce: String is too long (26 chars), maximum 16');
 					done();
 				});
 			});
@@ -157,7 +171,7 @@ describe('ClientRPCStub', function () {
 				System.setHeaders(validHeaders);
 				validClientRPCStub.status(function (err) {
 					expect(err).to.have.property('code').equal(failureCodes.INVALID_HEADERS);
-					expect(err).to.have.property('description').equal('#/: Missing required property: nonce');
+					expect(err).to.have.property('description').equal(': Missing required property: nonce');
 					done();
 				});
 			});
@@ -167,7 +181,7 @@ describe('ClientRPCStub', function () {
 				System.setHeaders(validHeaders);
 				validClientRPCStub.status(function (err) {
 					expect(err).to.have.property('code').equal(failureCodes.INVALID_HEADERS);
-					expect(err).to.have.property('description').equal('#/: Missing required property: nethash');
+					expect(err).to.have.property('description').equal(': Missing required property: nethash');
 					done();
 				});
 			});
@@ -177,7 +191,7 @@ describe('ClientRPCStub', function () {
 				System.setHeaders(validHeaders);
 				validClientRPCStub.status(function (err) {
 					expect(err).to.have.property('code').equal(failureCodes.INVALID_HEADERS);
-					expect(err).to.have.property('description').equal('#/height: Expected type integer but found type not-a-number');
+					expect(err).to.have.property('description').equal('height: Expected type integer but found type not-a-number');
 					done();
 				});
 			});
@@ -187,7 +201,7 @@ describe('ClientRPCStub', function () {
 				System.setHeaders(validHeaders);
 				validClientRPCStub.status(function (err) {
 					expect(err).to.have.property('code').equal(failureCodes.INVALID_HEADERS);
-					expect(err).to.have.property('description').equal('#/: Missing required property: version');
+					expect(err).to.have.property('description').equal(': Missing required property: version');
 					done();
 				});
 			});

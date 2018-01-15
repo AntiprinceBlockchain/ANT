@@ -1,3 +1,16 @@
+/*
+ * Copyright © 2018 Lisk Foundation
+ *
+ * See the LICENSE file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with the Lisk Foundation,
+ * no part of this software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ */
 'use strict';
 
 var test = require('../../functional.js');
@@ -185,10 +198,8 @@ describe('GET /api/voters', function () {
 				});
 			});
 
-			it('using invalid username as a number should fail', function () {
-				return votersEndpoint.makeRequest({username: 1}, 400).then(function (res) {
-					expectSwaggerParamError(res, 'username');
-				});
+			it('using unknown integer username should be ok but not found', function () {
+				return votersEndpoint.makeRequest({username: 1}, 404);
 			});
 
 			it('using valid existing username of genesis delegate should return the expected result', function () {

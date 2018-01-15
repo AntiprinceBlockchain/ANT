@@ -1,3 +1,16 @@
+/*
+ * Copyright © 2018 Lisk Foundation
+ *
+ * See the LICENSE file at the top-level directory of this distribution
+ * for licensing information.
+ *
+ * Unless otherwise agreed in a custom licensing agreement with the Lisk Foundation,
+ * no part of this software, including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE file.
+ *
+ * Removal or modification of this copyright notice is prohibited.
+ */
 'use strict';
 
 var async = require('async');
@@ -5,9 +18,18 @@ var bignum = require('./bignum');
 var fs = require('fs');
 var path = require('path');
 var monitor = require('pg-monitor');
+var repos = require('require-all')(__dirname + '/../db');
 
 var pgOptions = {
-	pgNative: true
+	pgNative: true,
+
+	// Extending the database protocol with our custom repositories;
+	// API: http://vitaly-t.github.io/pg-promise/global.html#event:extend
+	extend: function (object, dc) {
+		Object.keys(repos).forEach(function (repoName) {
+			object[repoName] = new repos[repoName](object, pgp);
+		});
+	}
 };
 var pgp = require('pg-promise')(pgOptions);
 var db;
@@ -19,6 +41,19 @@ var db;
  * @type {{}}
  */
 var queryFilesCommands = {};
+
+/**
+ * Creates memoized QueryFile object
+ * @param {string} sqlPath - Path to SQL file
+ * @return {Object} Memoized QueryFile object
+ */
+var createQueryFile = function (sqlPath) {
+	if (!queryFilesCommands[sqlPath]) {
+		queryFilesCommands[sqlPath] = new pgp.QueryFile(sqlPath, {minify: true});
+	}
+
+	return queryFilesCommands[sqlPath];
+};
 
 // var isWin = /^win/.test(process.platform);
 // var isMac = /^darwin/.test(process.platform);
@@ -68,7 +103,7 @@ function Migrator (pgp, db) {
 	};
 
 	/**
-	 * Reads folder `sql/migrations` and returns files grather than 
+	 * Reads folder `sql/migrations` and returns files grather than
 	 * lastMigration id.
 	 * @method
 	 * @param {Object} lastMigration
@@ -119,7 +154,7 @@ function Migrator (pgp, db) {
 	/**
 	 * Creates and execute a db query for each pending migration.
 	 * @method
-	 * @param {Array} pendingMigrations 
+	 * @param {Array} pendingMigrations
 	 * @param {function} waterCb - Callback function
 	 * @return {function} waterCb with error | appliedMigrations
 	 */
@@ -128,10 +163,8 @@ function Migrator (pgp, db) {
 
 
 		async.eachSeries(pendingMigrations, function (file, eachCb) {
-			if (!queryFilesCommands[file.path]) {
-				queryFilesCommands[file.path] = new pgp.QueryFile(file.path, {minify: true});
-			}
-			db.query(queryFilesCommands[file.path]).then(function () {
+			var queryFile = createQueryFile(file.path);
+			db.query(queryFile).then(function () {
 				appliedMigrations.push(file);
 				return eachCb();
 			}).catch(function (err) {
@@ -145,7 +178,7 @@ function Migrator (pgp, db) {
 	/**
 	 * Inserts into `migrations` table the previous applied migrations.
 	 * @method
-	 * @param {Array} appliedMigrations 
+	 * @param {Array} appliedMigrations
 	 * @param {function} waterCb - Callback function
 	 * @return {function} waterCb with error
 	 */
@@ -170,10 +203,8 @@ function Migrator (pgp, db) {
 	this.applyRuntimeQueryFile = function (waterCb) {
 		var dirname = path.basename(__dirname) === 'helpers' ? path.join(__dirname, '..') : __dirname;
 		var runtimeQueryPath = path.join(dirname, 'sql', 'runtime.sql');
-		if (!queryFilesCommands[runtimeQueryPath]) {
-			queryFilesCommands[runtimeQueryPath] = new pgp.QueryFile(path.join(dirname, 'sql', 'runtime.sql'), {minify: true});
-		}
-		db.query(queryFilesCommands[runtimeQueryPath]).then(function () {
+		var queryFile = createQueryFile(runtimeQueryPath);
+		db.query(queryFile).then(function () {
 			return waterCb();
 		}).catch(function (err) {
 			return waterCb(err);
@@ -203,7 +234,7 @@ module.exports.connect = function (config, logger, cb) {
 	try {
 		monitor.detach();
 	} catch (ex) {}
-	
+
 	monitor.attach(pgOptions, config.logEvents);
 	monitor.setTheme('matrix');
 
@@ -243,3 +274,5 @@ module.exports.disconnect = function (logger) {
 		logger.log('database disconnect exception - ', ex);
 	}
 };
+
+module.exports.createQueryFile = createQueryFile;
