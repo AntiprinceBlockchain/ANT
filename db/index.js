@@ -14,7 +14,7 @@
 'use strict';
 
 const monitor = require('pg-monitor');
-const repos = require('require-all')(`${__dirname}/repos`);
+const repos = require('./repos');
 const Promise = require('bluebird');
 
 // TODO: Had to change it from 'const' into 'let' because of the nasty 'rewire' hacks inside DBSandbox.js.

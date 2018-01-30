@@ -87,29 +87,29 @@ process.env.TOP = appConfig.topAccounts;
  * @property {Object} api - `api/http` folder content.
  */
 var config = {
-	root: path.dirname(__filename),
+	root: process.cwd(),
 	db: appConfig.db,
 	cache: appConfig.redis,
 	cacheEnabled: appConfig.cacheEnabled,
 	modules: {
-		accounts: './modules/accounts.js',
-		blocks: './modules/blocks.js',
-		cache: './modules/cache.js',
-		dapps: './modules/dapps.js',
-		delegates: './modules/delegates.js',
-		rounds: './modules/rounds.js',
-		loader: './modules/loader.js',
-		multisignatures: './modules/multisignatures.js',
-		node: './modules/node.js',
-		peers: './modules/peers.js',
-		system: './modules/system.js',
-		signatures: './modules/signatures.js',
-		transactions: './modules/transactions.js',
-		transport: './modules/transport.js',
-		voters: './modules/voters',
+		accounts: require('./modules/accounts'),
+		blocks: require('./modules/blocks'),
+		cache: require('./modules/cache'),
+		dapps: require('./modules/dapps'),
+		delegates: require('./modules/delegates'),
+		rounds: require('./modules/rounds'),
+		loader: require('./modules/loader'),
+		multisignatures: require('./modules/multisignatures'),
+		node: require('./modules/node'),
+		peers: require('./modules/peers'),
+		system: require('./modules/system'),
+		signatures: require('./modules/signatures'),
+		transactions: require('./modules/transactions'),
+		transport: require('./modules/transport'),
+		voters: require('./modules/voters'),
 	},
 	api: {
-		transport: { ws: './api/ws/transport.js' },
+		transport: { ws: require('./api/ws/transport.js') },
 	},
 };
 
@@ -669,7 +669,7 @@ d.run(() => {
 
 							d.run(() => {
 								logger.debug('Loading module', name);
-								var Klass = require(config.modules[name]);
+								var Klass = config.modules[name];
 								var obj = new Klass(cb, scope);
 								modules.push(obj);
 							});
@@ -698,9 +698,8 @@ d.run(() => {
 				function(scope, cb) {
 					Object.keys(config.api).forEach(moduleName => {
 						Object.keys(config.api[moduleName]).forEach(protocol => {
-							var apiEndpointPath = config.api[moduleName][protocol];
+							var ApiEndpoint = config.api[moduleName][protocol];
 							try {
-								var ApiEndpoint = require(apiEndpointPath);
 								new ApiEndpoint(
 									scope.modules[moduleName],
 									scope.network.app,
