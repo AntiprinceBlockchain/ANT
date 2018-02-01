@@ -613,7 +613,7 @@ Transport.prototype.shared = {
 				}
 			});
 		} else {
-			__private.receiveSignature(query.signature, err => {
+			__private.receiveSignature(query, err => {
 				if (err) {
 					return setImmediate(cb, null, { success: false, message: err });
 				} else {
