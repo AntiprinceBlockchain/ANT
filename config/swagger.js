@@ -18,7 +18,7 @@ var path = require('path');
 var _ = require('lodash');
 var swaggerHelper = require('../helpers/swagger');
 var controllers = require('../api/controllers');
-require('../api/fittings');
+var fittings = require('../api/fittings');
 
 // Its necessary to require this file to extend swagger validator with our custom formats
 require('../helpers/swagger').getValidator();
@@ -43,6 +43,10 @@ require('../helpers/swagger').getValidator();
 function bootstrapSwagger(app, config, logger, scope, cb) {
 	// Register modules to be used in swagger fittings
 	require('../helpers/swagger_module_registry').bind(scope);
+
+	Object.keys(fittings).forEach(c => {
+		fittings[c](scope);
+	});
 
 	Object.keys(controllers).forEach(c => {
 		controllers[c](scope);
@@ -84,6 +88,8 @@ function bootstrapSwagger(app, config, logger, scope, cb) {
 				cb(errors);
 				return;
 			}
+
+			console.log(errors);
 		}
 
 		// Swagger express middleware

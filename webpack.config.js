@@ -21,6 +21,7 @@ var ArchivePlugin = require('webpack-archive-plugin');
 var GenerateAssetPlugin = require('generate-asset-webpack-plugin');
 var BundleAnalyzerPlugin = require('webpack-bundle-analyzer')
 	.BundleAnalyzerPlugin;
+var CleanWebpackPlugin = require('clean-webpack-plugin');
 
 var moment = require('moment');
 var today = moment().format('HH:mm:ss DD/MM/YYYY');
@@ -45,9 +46,11 @@ module.exports = {
 	},
 	externals: [nodeExternals()],
 	plugins: [
+		new CleanWebpackPlugin([version_dir]),
 		new BundleAnalyzerPlugin({
-			openAnalyzer: true,
+			openAnalyzer: false,
 			analyzerMode: 'static',
+			statsOptions: { source: false },
 		}),
 		new GenerateAssetPlugin({
 			filename: './build',

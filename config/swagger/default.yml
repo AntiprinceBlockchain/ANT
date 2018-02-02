@@ -74,11 +74,6 @@ swagger:
       swagger_cache_key: x-lisk-cache-enabled
       mode: post_response
 
-    # For more details https://github.com/theganyo/swagger-node-runner/releases/tag/v0.6.10
-    _swagger_security:
-      name: swagger_security
-      securityHandlersModule: helpers/swagger_security_handlers
-
     _response_formatter:
       name: lisk_response_formatter
 
@@ -89,7 +84,6 @@ swagger:
       - _cors
       - _compression
       - _swagger_params_parser
-      - _swagger_security
       - _swagger_validate
       - express_compatibility
       - _pre_response_cache
