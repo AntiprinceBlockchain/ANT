@@ -363,7 +363,7 @@ Transport.prototype.onSignature = function(signature, broadcast) {
 	if (broadcast && !__private.broadcaster.maxRelays(signature)) {
 		__private.broadcaster.enqueue(
 			{},
-			{ api: 'postSignatures', data: { signature: signature } }
+			{ api: 'postSignatures', data: { signatures: [signature] } }
 		);
 		library.network.io.sockets.emit('signature/change', signature);
 	}
@@ -385,7 +385,7 @@ Transport.prototype.onUnconfirmedTransaction = function(
 	if (broadcast && !__private.broadcaster.maxRelays(transaction)) {
 		__private.broadcaster.enqueue(
 			{},
-			{ api: 'postTransactions', data: { transaction: transaction } }
+			{ api: 'postTransactions', data: { transactions: [transaction] } }
 		);
 		library.network.io.sockets.emit('transactions/change', transaction);
 	}
@@ -603,24 +603,24 @@ Transport.prototype.shared = {
 		});
 	},
 
+	postSignature: function(query, cb) {
+		__private.receiveSignature(query.signature, err => {
+			if (err) {
+				return setImmediate(cb, null, { success: false, message: err });
+			} else {
+				return setImmediate(cb, null, { success: true });
+			}
+		});
+	},
+
 	postSignatures: function(query, cb) {
-		if (query.signatures) {
-			__private.receiveSignatures(query, err => {
-				if (err) {
-					return setImmediate(cb, null, { success: false, message: err });
-				} else {
-					return setImmediate(cb, null, { success: true });
-				}
-			});
-		} else {
-			__private.receiveSignature(query.signature, err => {
-				if (err) {
-					return setImmediate(cb, null, { success: false, message: err });
-				} else {
-					return setImmediate(cb, null, { success: true });
-				}
-			});
-		}
+		__private.receiveSignatures(query, err => {
+			if (err) {
+				return setImmediate(cb, null, { success: false, message: err });
+			} else {
+				return setImmediate(cb, null, { success: true });
+			}
+		});
 	},
 
 	getSignatures: function(req, cb) {
@@ -656,36 +656,36 @@ Transport.prototype.shared = {
 		});
 	},
 
+	postTransaction: function(query, cb) {
+		__private.receiveTransaction(
+			query.transaction,
+			query.peer,
+			query.extraLogMessage,
+			(err, id) => {
+				if (err) {
+					return setImmediate(cb, null, { success: false, message: err });
+				} else {
+					return setImmediate(cb, null, {
+						success: true,
+						transactionId: id,
+					});
+				}
+			}
+		);
+	},
+
 	postTransactions: function(query, cb) {
-		if (query.transactions && query.transactions.length == 1) {
-			__private.receiveTransaction(
-				query.transactions[0],
-				query.peer,
-				query.extraLogMessage,
-				(err, id) => {
-					if (err) {
-						return setImmediate(cb, null, { success: false, message: err });
-					} else {
-						return setImmediate(cb, null, {
-							success: true,
-							transactionId: id,
-						});
-					}
+		__private.receiveTransactions(
+			query,
+			query.peer,
+			query.extraLogMessage,
+			err => {
+				if (err) {
+					return setImmediate(cb, null, { success: false, message: err });
 				}
-			);
-		} else {
-			__private.receiveTransactions(
-				query,
-				query.peer,
-				query.extraLogMessage,
-				err => {
-					if (err) {
-						return setImmediate(cb, null, { success: false, message: err });
-					}
-					return setImmediate(cb, null, { success: true });
-				}
-			);
-		}
+				return setImmediate(cb, null, { success: true });
+			}
+		);
 	},
 };
 

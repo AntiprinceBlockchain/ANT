@@ -216,7 +216,7 @@ function sendTransactionPromise(transaction, expectedStatusCode) {
 	transaction = normalizeTransactionObject(transaction);
 
 	return postTransactionsEndpoint.makeRequest(
-		{ transactions: [transaction] },
+		{ transaction: transaction },
 		expectedStatusCode
 	);
 }

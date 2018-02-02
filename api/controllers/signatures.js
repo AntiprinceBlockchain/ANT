@@ -39,10 +39,10 @@ function SignaturesController(scope) {
  * @param {function} next - Description of the param
  * @todo: Add description of the function and its parameters
  */
-SignaturesController.postSignatures = function(context, next) {
-	var signatures = context.request.swagger.params.signatures.value;
+SignaturesController.postSignature = function(context, next) {
+	var signature = context.request.swagger.params.signature.value; // TODO 2 check
 
-	modules.signatures.shared.postSignatures(signatures, (err, data) => {
+	modules.signatures.shared.postSignature(signature, (err, data) => {
 		if (err) {
 			if (err instanceof ApiError) {
 				context.statusCode = err.code;

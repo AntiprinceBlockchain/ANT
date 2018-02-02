@@ -22,11 +22,11 @@ var expectSwaggerParamError = require('../../../common/helpers/api')
 describe('POST /api/transactions (general)', () => {
 	var transactionsEndpoint = new swaggerSpec('POST /transactions');
 
-	it('should fail if empty transactions posted', () => {
+	it('should fail if null transaction posted', () => {
 		return transactionsEndpoint
-			.makeRequest({ transactions: [] }, 400)
+			.makeRequest({ transaction: null }, 400)
 			.then(res => {
-				expectSwaggerParamError(res, 'transactions');
+				expectSwaggerParamError(res, 'transaction');
 				expect(res.body.errors[0].errors[0].code).to.be.equal(
 					'ARRAY_LENGTH_SHORT'
 				);

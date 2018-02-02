@@ -47,17 +47,15 @@ describe('GET /api/accounts', () => {
 					.to.have.property('status')
 					.to.equal(200);
 
-				var signatures = [];
-				scenario.members.map(function(member) {
-					return signatures.push(
-						apiHelpers.createSignatureObject(
+				var signatureRequests = scenario.members.map(member => {
+					return {
+						signature: apiHelpers.createSignatureObject(
 							scenario.multiSigTransaction,
 							member
 						)
-					);
+					};
 				});
-
-				return signatureEndpoint.makeRequest({ signatures: signatures }, 200);
+				return signatureEndpoint.makeRequests(signatureRequests, 200);
 			})
 			.then(res => {
 				expect(res.body.meta.status).to.be.true;

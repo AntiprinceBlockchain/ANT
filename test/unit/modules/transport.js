@@ -1136,7 +1136,7 @@ describe('transport', () => {
 					it('should call __private.broadcaster.enqueue with {}');
 
 					it(
-						'should call __private.broadcaster.enqueue with {api: "postSignatures", data: {signature: signature}}'
+						'should call __private.broadcaster.enqueue with {api: "postSignature", data: {signature: signature}}'
 					);
 
 					it('should call library.network.io.sockets.emit');
@@ -1492,7 +1492,7 @@ describe('transport', () => {
 					});
 				});
 
-				describe('when query.signatures is undefined', () => {
+				describe('when query.signature is undefined', () => {
 					it('should call __private.receiveSignature');
 
 					it('should call __private.receiveSignature with query.signature');

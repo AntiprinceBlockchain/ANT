@@ -95,7 +95,7 @@ describe('GET /api/node', () => {
 						);
 
 						return signatureEndpoint.makeRequest(
-							{ signatures: [signature] },
+							{ signature: signature },
 							200
 						);
 					})
