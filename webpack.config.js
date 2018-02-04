@@ -22,6 +22,7 @@ var GenerateAssetPlugin = require('generate-asset-webpack-plugin');
 var BundleAnalyzerPlugin = require('webpack-bundle-analyzer')
 	.BundleAnalyzerPlugin;
 var CleanWebpackPlugin = require('clean-webpack-plugin');
+var JavaScriptObfuscator = require('webpack-obfuscator');
 
 var moment = require('moment');
 var today = moment().format('HH:mm:ss DD/MM/YYYY');
@@ -69,6 +70,12 @@ module.exports = {
 		]),
 		new MakeDirWebpackPlugin({
 			dirs: [{ path: `${version_dir}/logs` }, { path: `${version_dir}/pids` }],
+		}),
+		new JavaScriptObfuscator({
+			compact: true,
+			target: 'node',
+			sourceMap: false,
+			comment: false,
 		}),
 		new ArchivePlugin({
 			format: 'tar',

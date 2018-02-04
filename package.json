@@ -131,6 +131,7 @@
 		"webpack": "=3.10.0",
 		"webpack-archive-plugin": "=3.0.0",
 		"webpack-bundle-analyzer": "=2.9.2",
-		"webpack-node-externals": "=1.6.0"
+		"webpack-node-externals": "=1.6.0",
+		"webpack-obfuscator": "=0.13.0"
 	}
 }
