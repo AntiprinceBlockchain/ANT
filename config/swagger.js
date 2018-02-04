@@ -17,8 +17,6 @@ var SwaggerRunner = require('swagger-node-runner');
 var path = require('path');
 var _ = require('lodash');
 var swaggerHelper = require('../helpers/swagger');
-var controllers = require('../api/controllers');
-var fittings = require('../api/fittings');
 
 // Its necessary to require this file to extend swagger validator with our custom formats
 require('../helpers/swagger').getValidator();
@@ -44,10 +42,11 @@ function bootstrapSwagger(app, config, logger, scope, cb) {
 	// Register modules to be used in swagger fittings
 	require('../helpers/swagger_module_registry').bind(scope);
 
-	Object.keys(fittings).forEach(c => {
-		fittings[c](scope);
-	});
+	// Load the fittings
+	const fittings = require('../api/fittings');
+	const controllers = require('../api/controllers');
 
+	// Initialize controllers
 	Object.keys(controllers).forEach(c => {
 		controllers[c](scope);
 	});
@@ -59,6 +58,8 @@ function bootstrapSwagger(app, config, logger, scope, cb) {
 		enforceUniqueOperationId: true,
 		startWithErrors: false,
 		startWithWarnings: true,
+		controllers: controllers,
+		fittings: fittings,
 	};
 
 	// Swagger express middleware

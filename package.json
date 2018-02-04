@@ -78,7 +78,9 @@
 		"socketcluster-client": "=9.0.2",
 		"sodium": "LiskHQ/node-sodium#895ac4482a56a34eba81205e43e0c859490fb99d",
 		"strftime": "=0.10.0",
-		"swagger-node-runner": "=0.7.3",
+		"swagger-node-runner":
+			"nazarhussain/swagger-node-runner#e2f8d0f9457de59d067e1186264b9961e04ef59e",
+		"json-refs": "=2.1.5",
 		"valid-url": "=1.0.9",
 		"validator": "=7.0.0",
 		"validator.js": "=2.0.3",
