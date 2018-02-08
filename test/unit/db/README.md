@@ -6,26 +6,26 @@ Each repository is tested within a single JavScript file with the name matching 
 
 ### Test Stub
 
-Module [./pgp_stub.js](./pgp_stub.js) exports class `PGPromiseStub` to simplify testing the SQL being executed with its result side-by-side.
+Module [./pgp_stub.js](./stubs.js) exports class `PGPromiseStub` to simplify testing the SQL being executed with its result side-by-side.
 
 Example:
 
 ```js
-const PGPromiseStub = require('../pgp_stub');
+const PGPromiseStub = require('../stubs');
 
-const stub = new PGPromiseStub(db); // Initialize with the Database object
+const stubs = new PGPromiseStub(db); // Initialize with the Database object
 
 /////////////////////////////////////////////////
 // Test with intercepting the SQL from execution:
 
 // Test method via reference:
-sub
+stubs
 	.intercept(db.accounts.insert, data)
 	.then()
 	.catch();
 
 // Test method via name:
-sub
+stubs
 	.intercept('accounts.insert', data)
 	.then()
 	.catch();
