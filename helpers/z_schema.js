@@ -104,6 +104,7 @@ var liskFormats = {
 
 		return /^[a-z0-9!@$&_.]*$/gi.test(str);
 	},
+
 	/**
 	 * Description of the function.
 	 *
