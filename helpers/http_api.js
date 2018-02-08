@@ -56,11 +56,18 @@ var middleware = {
 		if (!err) {
 			return next();
 		}
-		logger.error(`API error ${req.url}`, err.message);
-		console.trace(err);
-		res
+		// TODO 2: Should we ever send back a 500?
+		if (err.status === 400) {
+			res
+			.status(400)
+			.send({ success: false, error: `API error: ${err.message}` });
+		} else {
+			logger.error(`API error ${req.url}`, err.message);
+			console.trace(err);
+			res
 			.status(500)
 			.send({ success: false, error: `API error: ${err.message}` });
+		}
 	},
 
 	/**

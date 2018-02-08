@@ -57,8 +57,10 @@ describe('GET /api/accounts', () => {
 				});
 				return signatureEndpoint.makeRequests(signatureRequests, 200);
 			})
-			.then(res => {
-				expect(res.body.meta.status).to.be.true;
+			.then(responses => {
+				responses.forEach(res => {
+					expect(res.body.meta.status).to.be.true;
+				});
 				return waitFor.confirmations([scenario.multiSigTransaction.id]);
 			});
 	});

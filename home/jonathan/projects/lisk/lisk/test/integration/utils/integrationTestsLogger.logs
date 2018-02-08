@@ -1,0 +1,5 @@
+[log] 2018-02-04 21:43:48 | Generating PM2 configuration
+[log] 2018-02-04 21:43:48 | Recreating databases
+[log] 2018-02-04 21:43:50 | Clearing existing logs
+[log] 2018-02-04 21:43:50 | Launching network
+[log] 2018-02-04 21:43:52 | Waiting for nodes to load the blockchain

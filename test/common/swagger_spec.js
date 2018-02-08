@@ -178,6 +178,7 @@ SwaggerTestSpec.prototype.makeRequest = function(parameters, responseCode) {
 			var req = supertest(__testContext.baseUrl);
 
 			if (self.method === 'post') {
+				headers['Content-Type'] = 'application/json';
 				req = req.post(callPath);
 			} else if (self.method === 'put') {
 				req = req.put(callPath);
@@ -219,6 +220,7 @@ SwaggerTestSpec.prototype.makeRequest = function(parameters, responseCode) {
 
 			expect(res.statusCode).to.be.eql(expectedResponseCode);
 			expect(res.headers['content-type']).to.match(/json/);
+
 			expect(res.body).to.be.validResponse(
 				self.getResponseSpecPath(expectedResponseCode)
 			);

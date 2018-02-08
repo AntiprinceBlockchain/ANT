@@ -27,23 +27,11 @@ describe('POST /api/transactions (general)', () => {
 			.makeRequest({ transaction: null }, 400)
 			.then(res => {
 				expectSwaggerParamError(res, 'transaction');
-				expect(res.body.errors[0].errors[0].code).to.be.equal(
-					'ARRAY_LENGTH_SHORT'
+				console.log("transaction request succeeded, res.body:", res.body);
+				expect(res.body.errors[0].code).to.be.equal(
+					'INVALID_REQUEST_PARAMETER'
 				);
-			});
+			})
 	});
 
-	it('should fail on more than one transactions at a time', () => {
-		return transactionsEndpoint
-			.makeRequest(
-				{ transactions: [randomUtil.transaction(), randomUtil.transaction()] },
-				400
-			)
-			.then(res => {
-				expectSwaggerParamError(res, 'transactions');
-				expect(res.body.errors[0].errors[0].code).to.be.equal(
-					'ARRAY_LENGTH_LONG'
-				);
-			});
-	});
 });
