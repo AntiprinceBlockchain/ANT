@@ -36,8 +36,8 @@
 		"docs:serve": "./node_modules/.bin/http-server docs/jsdoc/",
 		"precommit": "lint-staged && npm run lint",
 		"prepush": "npm run lint",
-		"snyk-protect": "snyk protect",
-		"prepublish": "npm run snyk-protect"
+		"check:dependencies": "snyk protect",
+		"prepublish": "npm run check:dependencies"
 	},
 	"dependencies": {
 		"async": "=2.4.1",
@@ -77,6 +77,7 @@
 		"redis": "=2.7.1",
 		"rimraf": "=2.6.1",
 		"semver": "=5.3.0",
+		"snyk": "^1.69.6",
 		"socket.io": "=2.0.3",
 		"socketcluster": "=9.2.0",
 		"socketcluster-client": "=9.0.3",
@@ -89,8 +90,7 @@
 		"validator.js": "=2.0.3",
 		"wamp-socket-cluster":
 			"LiskHQ/wamp-socket-cluster#77326d47d24eea6903a3cbf5172f7b88908c9d84",
-		"z-schema": "=3.18.2",
-		"snyk": "^1.69.6"
+		"z-schema": "=3.18.2"
 	},
 	"devDependencies": {
 		"bitcore-mnemonic": "=1.2.5",
