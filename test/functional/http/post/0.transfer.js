@@ -41,9 +41,8 @@ describe('POST /api/transactions (type 0) transfer funds', () => {
 	describe('schema validations', () => {
 		typesRepresentatives.allTypes.forEach(test => {
 			it(`using ${test.description} should fail`, () => {
-				console.log(22222, test.input); // TODO 2
 				return sendTransactionPromise(test.input, 400).then(res => {
-					// expect(res).to.have.nested.property('body.message').that.is.not.empty;
+					expect(res).to.have.nested.property('body.message').that.is.not.empty;
 				});
 			});
 		});

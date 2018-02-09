@@ -56,11 +56,22 @@ var middleware = {
 		if (!err) {
 			return next();
 		}
-		// TODO 2: Should we ever send back a 500?
-		if (err.status === 400) {
+		if (err.status === 400 && err.name === 'SyntaxError') {
+			logger.error(`API parse error ${req.url}`, err.message);
+			console.trace(err);
 			res
 			.status(400)
-			.send({ success: false, error: `API error: ${err.message}` });
+			.send({
+				message: 'Parse errors',
+				errors: [
+					{
+						code: 'INVALID_REQUEST_PAYLOAD',
+						name: 'payload',
+						in: 'query',
+						message: err.message
+					}
+				]
+			});
 		} else {
 			logger.error(`API error ${req.url}`, err.message);
 			console.trace(err);

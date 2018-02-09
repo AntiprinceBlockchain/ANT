@@ -220,7 +220,6 @@ SwaggerTestSpec.prototype.makeRequest = function(parameters, responseCode) {
 
 			expect(res.statusCode).to.be.eql(expectedResponseCode);
 			expect(res.headers['content-type']).to.match(/json/);
-
 			expect(res.body).to.be.validResponse(
 				self.getResponseSpecPath(expectedResponseCode)
 			);

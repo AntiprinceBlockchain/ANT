@@ -396,11 +396,13 @@ d.run(() => {
 							parameterLimit: 5000,
 						})
 					);
+
 					// Disable strict mode since it sometimes conflicts with our schema validator.
 					// E.g. When passing null as the body of a POST request; we want to send
 					// back a 400 (malformed query or parameters), not a generic 500 (internal
 					// server error).
-					scope.network.app.use(bodyParser.json({ limit: '2mb', strict: false }));
+					scope.network.app.use(bodyParser.json({ limit: '2mb' }));
+
 					scope.network.app.use(methodOverride());
 
 					var ignore = [
