@@ -1,4 +1,8 @@
-# Lisk
+# ANTIPRINCE BLOCKCHAIN
+
+Antiprince is a crypto-currency and democratic plateform that aime to become an universal model of governance.
+
+The code is still in its enfancy, therefore all the lines below still correspond to the original code from the decentralized application platform Lisk. We will.
 
 Lisk is a next generation crypto-currency and decentralized application platform, written entirely in JavaScript. For more information please refer to our website: https://lisk.io/.
 
