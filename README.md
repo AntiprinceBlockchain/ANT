@@ -1,6 +1,12 @@
 # ANTIPRINCE BLOCKCHAIN
 
-Antiprince is a crypto-currency and democratic plateform that aime to become an universal model of governance.
+Antiprince is a crypto-currency and democratic plateform that aim to become an universal model of governance.
+
+Roadmap
+-> Select only the useful part of the Lisk Blockchain for the Antiprince Blockchain. The Antiprince Blockchain does not need dApps, however it needs the possibility of sub-blockchain and sub-currency. (Currently here)
+-> Merge the Blockchain with the current system of voting build in decred.
+-> Add the possibility to use 10 % of each block to fund development in a similar fashion of the Dash Blockchain.
+-> Add the 4 essential categories : Ambassador, Godfather, Citizens and Laws.
 
 The code is still in its enfancy, therefore all the lines below still correspond to the original code from the decentralized application platform Lisk. Right now, all the codes from this Github comes from the Lisk project.
 
